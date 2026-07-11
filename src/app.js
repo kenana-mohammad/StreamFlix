@@ -11,6 +11,7 @@ const PORT = process.env.PORT || 3000;
 const MONGOOSE_URL = process.env.MONGOOSE_URL;
 const notFound = require('./middlewares/notFound');
 const errorHandler = require('./middlewares/errorHandler');
+const schedulerService = require('./modules/content/services/scheduler.service');
 //use server support cookies
 const cookies = require('cookie-parser');
 const {
@@ -29,6 +30,8 @@ const xssSanitize = require('./middlewares/xss');
 app.use(xssSanitize);
 app.use(express.static('public'))
 
+const apiRoutes = require('./modules/content/index');
+app.use('/api', apiRoutes);
 //========================================================
 app.get('/api/health', (req, res) => {
     return res.status(200).json('the api is healthy')
@@ -41,6 +44,10 @@ app.use(errorHandler);
 
 const mongoose = require('mongoose');
 mongoose.connect(MONGOOSE_URL).then(() => {
+    
+    schedulerService.init();
+    console.log('Scheduler initialized successfully');
+
     app.listen(PORT, () => {
         console.log(`the server is runnig == ${PORT}`);
 

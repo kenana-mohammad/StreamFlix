@@ -18,7 +18,7 @@ const contentSchema = new Schema({
         type: String,
         enum: {
             values: Object.values(CONTENT_TYPE),
-            message: 'نوع المحتوى غير صالح'
+            message: 'Content type is invalid'
         },
         required: true
     },
@@ -30,7 +30,7 @@ const contentSchema = new Schema({
         type: String,
         enum: {
             values: Object.values(AGE_RATING),
-            message: 'تصنيف العمر غير صالح'
+            message: 'Age rating is invalid'
         },
         required: true
     },
@@ -61,12 +61,18 @@ const contentSchema = new Schema({
         type: String,
         enum: {
             values: Object.values(CONTENT_STATUS),
-            message: 'حالة المحتوى غير صالحة'
+            message: 'Content status is invalid'
         },
         default: CONTENT_STATUS.DRAFT
+    },
+    publishAt: {
+        type: Date,
+        required: false
     }
 }, {
     timestamps: true
 });
+
+contentSchema.index({ type: 1, status: 1 });
 
 module.exports = mongoose.model('Content', contentSchema);
