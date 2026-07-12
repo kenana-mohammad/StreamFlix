@@ -34,16 +34,33 @@ const planSchema = new mongoose.Schema({
 
     quality: {
         type: String,
+        required: [true, 'جودة البث مطلوبة'],
         enum: {
             values: Object.values(QUALITY),
-            message: 'جودة غير صالحة'
-        },
-        required: [true, 'جودة العرض مطلوبة']
+            message: 'الجودة المحددة غير مدعومة'
+        }
     },
 
     isActive: {
         type: Boolean,
         default: true
+    },
+
+    isLimited: {
+        type: Boolean,
+        default: false
+    },
+
+    maxMovies: {
+        type: Number,
+        default: 0,
+        min: [0, 'عدد الأفلام لا يمكن أن يكون سالباً']
+    },
+
+    maxSeries: {
+        type: Number,
+        default: 0,
+        min: [0, 'عدد المسلسلات لا يمكن أن يكون سالباً']
     }
 }, {
     timestamps: true
