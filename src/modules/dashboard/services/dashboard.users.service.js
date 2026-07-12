@@ -1,6 +1,7 @@
 const User = require('../../users/models/User');
 const Profile = require('../../profiles/models/Profile')
 const AppError = require('../../../shared/errors/AppError');
+const USER_STATUS = require('../../../shared/constants/user-status.constant');
 
 
 class DashboardUsersService {
@@ -33,7 +34,7 @@ class DashboardUsersService {
          if(!user) {
           throw new AppError("User not found", 404);
          }
-         user.isActive = true ;
+         user.status = USER_STATUS.ACTIVE;
          await user.save();
          return { data: user }
       }
@@ -43,7 +44,7 @@ class DashboardUsersService {
         if(!user) {
           throw new AppError("User not found", 404);
         }
-        user.isActive = false;
+        user.status = USER_STATUS.INACTIVE;
         await user.save();
         return { data: user }
       }
