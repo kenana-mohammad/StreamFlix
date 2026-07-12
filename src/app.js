@@ -34,6 +34,8 @@ app.get('/api/health', (req, res) => {
     return res.status(200).json('the api is healthy')
 });
 
+app.use('/api/v1/dashboard', require('./modules/dashboard/routes/dashboard.routes'));
+app.use('/api/v1/dashboard/users', require('./modules/dashboard/routes/dashboard.users.route'));
 
 app.use(notFound);
 app.use(errorHandler);
