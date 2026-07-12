@@ -1,8 +1,9 @@
 const User = require('../../users/models/User');
-const Profile = require('../../profiles/models/Profile')
+const Profile = require('../../profiles/models/Profile');
+const Subscription = require('../../subscriptions/models/Subscription');
 const AppError = require('../../../shared/errors/AppError');
 const USER_STATUS = require('../../../shared/constants/user-status.constant');
-
+const SUBSCRIPTION_STATUS = require('../../../shared/constants/subscription-status.constant');
 
 class DashboardUsersService {
   static searchUser = async (query) => {
@@ -31,22 +32,34 @@ class DashboardUsersService {
 
       static enableAccount = async (userId) => {
          const user = await User.findById(userId);
-         if(!user) {
-          throw new AppError("User not found", 404);
+         const subscription = await Subscription.findOne({ user: userId });
+         if (!user) {
+             throw new AppError("User not found", 404);
          }
          user.status = USER_STATUS.ACTIVE;
          await user.save();
-         return { data: user }
+
+         if (subscription) {
+             subscription.status = SUBSCRIPTION_STATUS.ACTIVE;
+             await subscription.save();
+         }
+
+         return { data: user  , subscription: subscription }
       }
 
       static disableAccount = async (userId) => {
         const user = await User.findById(userId);
-        if(!user) {
-          throw new AppError("User not found", 404);
+        const subscription = await Subscription.findOne({ user: userId });
+        if (!user) {
+            throw new AppError("User not found", 404);
         }
         user.status = USER_STATUS.INACTIVE;
         await user.save();
-        return { data: user }
+         if (subscription) {
+             subscription.status = SUBSCRIPTION_STATUS.INACTIVE;
+             await subscription.save();
+         }
+        return { data: user , subscription: subscription }
       }
 }
 
