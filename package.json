@@ -6,6 +6,7 @@
     "dev": "nodemon ./src/app.js",
     "seed:admin": "node ./src/scripts/createAdmin.js",
     "seed:test": "node ./src/scripts/seed.constants.test.js"
+   
   },
   "keywords": [],
   "author": "",
