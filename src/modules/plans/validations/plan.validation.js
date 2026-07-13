@@ -6,6 +6,12 @@ const createPlanValidation = [
         console.log("CREATE VALIDATION RUNNING");
         next();
     },
+body("description")
+    .optional()
+    .isString()
+    .withMessage("Description must be a string")
+    .isLength({ max: 500 })
+    .withMessage("Description must not exceed 500 characters"),
 
     body("name")
         .notEmpty()
@@ -80,7 +86,13 @@ const updatePlanValidation = [
         .optional()
         .isLength({ min: 2, max: 50 })
         .withMessage("Plan name must be between 2 and 50 characters"),
-
+body("description")
+    .optional()
+    .isString()
+    .withMessage("Description must be a string")
+    .isLength({ max: 500 })
+    .withMessage("Description must not exceed 500 characters"),
+    
     body("price")
         .optional()
         .isFloat({ min: 0 })

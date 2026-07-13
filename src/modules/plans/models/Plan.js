@@ -7,7 +7,11 @@ const planSchema = new mongoose.Schema({
         required: [true, 'اسم الباقة مطلوب'],
         trim: true
     },
-
+description: {
+    type: String,
+    trim: true,
+    default: null
+},
     price: {
         type: Number,
         required: [true, 'السعر مطلوب'],
