@@ -29,7 +29,7 @@ class GenreController {
 
 
   getAll = async (req, res) => {
-    const genres = await genreService.getAll();
+    const genres = await genreService.getAll(req.query);
 
     return successResponse(
       res,
