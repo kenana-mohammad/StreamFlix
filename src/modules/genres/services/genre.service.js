@@ -72,7 +72,8 @@ class GenreService {
     }
 
 
-    Object.assign(genre, data);
+    genre.name = data.name ?? genre.name;
+    genre.description = data.description ?? genre.description;
 
     await genre.save();
 
