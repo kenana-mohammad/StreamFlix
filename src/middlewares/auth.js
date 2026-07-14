@@ -7,7 +7,7 @@ const auth = (req, res, next) => {
 
         if (!token) {
             return res.status(403).json({
-                msg: "Not Authorized=="
+                msg: "Not Authorized"
             })
         }
 
