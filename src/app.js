@@ -1,10 +1,11 @@
 require('dotenv').config();
 const express = require('express');
 const app = express();
+
 app.use(express.json());
 app.use(express.urlencoded({
     extended: true
-}))
+}));
 app.use(require('morgan')('dev'));
 const path = require("path");
 const PORT = process.env.PORT || 3000;
@@ -31,12 +32,21 @@ app.use(express.static('public'))
 
 const genreRoutes = require("./modules/genres");
 //========================================================
+
 app.get('/api/health', (req, res) => {
     return res.status(200).json('the api is healthy')
 });
+const planRoutes = require("./modules/plans");
+
+app.use("/api/plans", planRoutes);
+// auth
+app.use('/api/v1/auth', require("./modules/auth/routes/auth.routes"));
+//profile
+app.use('/api/v1/users', require("./modules/users/routes/user.routes"));
 
 app.use('/api/genres', genreRoutes);
 
+app.use('/api/v1/devices', require("./modules/devices/routes/device.routes"));
 app.use('/api/v1/dashboard', require('./modules/dashboard/routes/dashboard.routes'));
 app.use('/api/v1/dashboard/users', require('./modules/dashboard/routes/dashboard.users.route'));
 
