@@ -12,7 +12,7 @@ const {
 // Admin APIs
 router.post(
     "/",
-    createCastValidation,
+
     asyncHandler(CastController.createCast)
 );
 
@@ -33,7 +33,7 @@ router.get(
 
 router.put(
     "/:id",
-    updateCastValidation,
+
     asyncHandler(CastController.updateCast)
 );
 

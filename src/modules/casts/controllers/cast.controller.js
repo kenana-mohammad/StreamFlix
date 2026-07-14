@@ -12,8 +12,9 @@ const createCast = async (req, res) => {
             errors: errors.array(),
         });
     }
-
-    const cast = await CastService.create(req.body);
+    
+    const { name , image , biography } = req.body;
+    const cast = await CastService.createCast({ name, image, biography });
 
     return res.status(201).json({
         success: true,
@@ -26,7 +27,7 @@ const createCast = async (req, res) => {
 // Get All Casts
 const getAllCasts = async (req, res) => {
 
-    const casts = await CastService.getAll();
+    const casts = await CastService.getAllCasts();
 
     return res.status(200).json({
         success: true,
@@ -107,7 +108,7 @@ const searchCast = async (req, res) => {
 
     const name = req.query.name || "";
 
-    const casts = await CastService.search(name);
+    const casts = await CastService.searchCast(name);
 
     return res.status(200).json({
         success: true,

@@ -23,12 +23,13 @@ const deleteCast = async (id) => {
 };
 
 const searchCast = async (name) => {
-  return await Cast.find({
+  const searchResults = await Cast.find({
     name: {
       $regex: name,
       $options: "i",
     },
   });
+  return searchResults;
 };
 
 module.exports = {
