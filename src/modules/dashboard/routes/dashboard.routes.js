@@ -6,8 +6,8 @@ const role = require("../../../middlewares/role");
 const auth = require("../../../middlewares/auth");
 const { SUPER_ADMIN } = require("../../../shared/constants/roles.constant");
 
-router.get("/", 
-    [auth, role(SUPER_ADMIN)], 
+router.get("/",
+    // [auth, role(SUPER_ADMIN)], 
     asyncHandler(DashboardController.getDashboardData));
 
 module.exports = router;

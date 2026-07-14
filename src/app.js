@@ -46,6 +46,9 @@ app.use('/api/v1/users', require("./modules/users/routes/user.routes"));
 
 app.use('/api/genres', genreRoutes);
 
+//section dashboard routes
+app.use('/api/v1/admin/analytics', require('./modules/dashboard/routes/dashboard.routes'));
+app.use('/api/v1/admin/users', require('./modules/dashboard/routes/dashboard.users.route'));
 app.use('/api/v1/devices', require("./modules/devices/routes/device.routes"));
 app.use('/api/v1/dashboard', require('./modules/dashboard/routes/dashboard.routes'));
 app.use('/api/v1/dashboard/users', require('./modules/dashboard/routes/dashboard.users.route'));

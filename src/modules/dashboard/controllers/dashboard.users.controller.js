@@ -2,55 +2,56 @@ const { successResponse, errorResponse } = require("../../../shared/helpers/api-
 const DashboardUserService = require("../services/dashboard.users.service");
 
 class DashboardUsersController {
-    async searchUser (req, res) {
-         const { query } = req.query;
-         const users = await DashboardUserService.searchUser(query);
-         if(!users) {
-            return errorResponse(res, 404, "No users found matching the search criteria");
-         }
-         return successResponse(res, 200, 
-            "User search results retrieved successfully", 
-            { data: users });
-    }
+
+    getUsers = async(req, res) => {
+        const users = await DashboardUserService.getUsers(req.query.query);
+
+        const message = users.length > 0 ?
+            "Results found" :
+            "No users match your search";
+
+        return successResponse(res, 200, message, users);
+    };
 
     async getUserInfo(req, res) {
-        const { userId } = req.params;
-        const userInfo = await DashboardUserService.getUserInfo(userId);
-        if(!userInfo) {
-            return errorResponse(res, 404, "User not found");
-        }
+        const { id } = req.params;
+        const { userInfo, profileCount, userProfiles } = await DashboardUserService.getUserInfo(id);
+
 
         return successResponse(res, 200,
-            "User information retrieved successfully",
-            { data: userInfo }
-        )
+            "User information retrieved successfully", { data: userInfo, profileCount: profileCount || 0, userProfiles: userProfiles || [] }
+        );
 
     }
 
 
-    async enableAccount(req, res) {
-        const { userId } = req.params;
-        const userEnabled = await DashboardUserService.enableAccount(userId);
-        if(!userEnabled) {
-            return errorResponse(res, 404, "User not found");
-        }
+    async updateAccountStatus(req, res) {
+        const { id } = req.params;
+        const { status } = req.body;
+        const { userStatusUpdated, subscription } = await DashboardUserService.updateAccountStatus(id, status);
+
 
         return successResponse(res, 200,
-            "User's Account Enabled Successfully",
-            { data: userEnabled }
+            "User's Account Status Updated Successfully", { data: userStatusUpdated, subscription: subscription || "NOT SUBSCRIBED" }
         )
     }
 
-    async disableAccount (req, res) {
-        const { userId } = req.params;
-        const userDisabled = await DashboardUserService.disableAccount(userId);
-        if(!userDisabled) {
-            return errorResponse(res, 404, "User not found");
-        }
+
+
+    async createContentManager(req, res) {
+        const { name, email, password, phone } = req.body;
+        const contentManager = await DashboardUserService.createContentManager(
+            name,
+            email,
+            password,
+            phone
+        )
+
+
 
         return successResponse(res, 200,
-            "User's Account Disabled Successfully",
-            { data: userDisabled }
+            "Content manager created successfully",
+            contentManager
         )
     }
 }
