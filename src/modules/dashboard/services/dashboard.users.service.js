@@ -11,7 +11,7 @@ class DashboardUsersService {
        const regex = new RegExp(query, 'i');
        const users = await User.find({
            $or: [
-               { username: regex },
+               { name: regex },
                { email: regex }
            ]
        })
