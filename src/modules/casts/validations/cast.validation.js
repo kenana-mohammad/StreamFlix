@@ -1,35 +1,63 @@
-const { body } = require("express-validator");
+const Cast = require("../models/cast.model");
 
-const createCastValidation = [
-  body("name")
-    .notEmpty()
-    .withMessage("Name is required")
-    .isLength({ min: 2, max: 100 }),
+class CastService {
 
-  body("image")
-    .optional()
-    .isString(),
+    async create(data) {
 
-  body("biography")
-    .optional()
-    .isString(),
-];
+        return await Cast.create({
+            name: data.name,
+            image: data.image,
+            biography: data.biography
+        });
 
-const updateCastValidation = [
-  body("name")
-    .optional()
-    .isLength({ min: 2, max: 100 }),
+    }
 
-  body("image")
-    .optional()
-    .isString(),
+    async getAll() {
 
-  body("biography")
-    .optional()
-    .isString(),
-];
+        return await Cast.find().sort({ createdAt: -1 });
 
-module.exports = {
-  createCastValidation,
-  updateCastValidation,
-};
+    }
+
+    async getById(id) {
+
+        return await Cast.findById(id);
+
+    }
+
+    async update(id, data) {
+
+        const cast = await Cast.findById(id);
+
+        if (!cast)
+            return null;
+
+        cast.name = data.name ?? cast.name;
+        cast.image = data.image ?? cast.image;
+        cast.biography = data.biography ?? cast.biography;
+
+        await cast.save();
+
+        return cast;
+
+    }
+
+    async delete(id) {
+
+        return await Cast.findByIdAndDelete(id);
+
+    }
+
+    async search(name) {
+
+        return await Cast.find({
+            name: {
+                $regex: name,
+                $options: "i"
+            }
+        });
+
+    }
+
+}
+
+module.exports = new CastService();
