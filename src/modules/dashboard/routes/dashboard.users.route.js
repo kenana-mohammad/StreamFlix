@@ -7,24 +7,22 @@ const { userIdValidation } = require("../validations/dashboard.users.validation"
 const auth = require("../../../middlewares/auth");
 const { SUPER_ADMIN } = require("../../../shared/constants/roles.constant");
 
-router.get("/search",
-     [auth, role(SUPER_ADMIN)], 
-    asyncHandler(DashboardUsersController.searchUser));
+router.get("/",
+    // [auth, role(SUPER_ADMIN)], 
+    asyncHandler(DashboardUsersController.getUsers));
+router.post("/create/content-manager", [auth, role(SUPER_ADMIN)],
+    asyncHandler(DashboardUsersController.createContentManager));
 
-router.get("/:id",
-     [auth, userIdValidation, role(SUPER_ADMIN)],
+router.get("/:id", [userIdValidation,
+        //   auth, role(SUPER_ADMIN)
+    ],
     asyncHandler(DashboardUsersController.getUserInfo));
 
-router.put("/enable/:id",
-     [auth, userIdValidation, role(SUPER_ADMIN)],
-     asyncHandler(DashboardUsersController.enableAccount));
+router.put("/update-status/:id", [userIdValidation,
+        //    role(SUPER_ADMIN), auth
+    ],
+    asyncHandler(DashboardUsersController.updateAccountStatus));
 
-router.put("/disable/:id",
-     [auth, userIdValidation, role(SUPER_ADMIN)],
-     asyncHandler(DashboardUsersController.disableAccount));
 
-router.post("/create/content-manager",
-     [auth, role(SUPER_ADMIN)],
-     asyncHandler(DashboardUsersController.createContentManager));
 
 module.exports = router;

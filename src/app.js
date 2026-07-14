@@ -34,7 +34,8 @@ app.get('/api/health', (req, res) => {
     return res.status(200).json('the api is healthy')
 });
 
-
+//=======================
+//section dashboard routes
 app.use('/api/v1/admin/analytics', require('./modules/dashboard/routes/dashboard.routes'));
 app.use('/api/v1/admin/users', require('./modules/dashboard/routes/dashboard.users.route'));
 
