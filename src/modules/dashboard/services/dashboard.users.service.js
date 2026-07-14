@@ -15,14 +15,13 @@ class DashboardUsersService {
                { email: regex }
            ]
        })
-       .select("-password")
        .sort({ createdAt: -1 });
 
        return users;
       }
    
       static getUserInfo = async (userId) => {
-          const userInfo = await User.findById(userId).select("-password");
+          const userInfo = await User.findById(userId);
           if (!userInfo) {
               throw new AppError("User not found", 404);
           }

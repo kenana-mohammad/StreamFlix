@@ -34,8 +34,9 @@ app.get('/api/health', (req, res) => {
     return res.status(200).json('the api is healthy')
 });
 
-const dashRoutes = require('./modules/dashboard/index');
-app.use('/api/v1/admin', dashRoutes);
+
+app.use('/api/v1/admin/analytics', require('./modules/dashboard/routes/dashboard.routes'));
+app.use('/api/v1/admin/users', require('./modules/dashboard/routes/dashboard.users.route'));
 
 app.use(notFound);
 app.use(errorHandler);

@@ -78,7 +78,8 @@ class DashboardUsersController {
            email,
            password,
            phone
-       );
+       )
+
        if(!contentManager) {
            return errorResponse(res, 404, "Failed to create content manager");
        }
