@@ -1,25 +1,45 @@
 const express = require("express");
-
 const router = express.Router();
 
+const asyncHandler = require("../../../utils/asyncHandler");
 const CastController = require("../controllers/cast.controller");
 
 const {
-  createCastValidation,
-  updateCastValidation,
+    createCastValidation,
+    updateCastValidation,
 } = require("../validations/cast.validation");
 
 // Admin APIs
-router.post("/", createCastValidation, CastController.createCast);
+router.post(
+    "/",
+    createCastValidation,
+    asyncHandler(CastController.createCast)
+);
 
-router.get("/", CastController.getAllCasts);
+router.get(
+    "/",
+    asyncHandler(CastController.getAllCasts)
+);
 
-router.get("/search", CastController.searchCast);
+router.get(
+    "/search",
+    asyncHandler(CastController.searchCast)
+);
 
-router.get("/:id", CastController.getCastById);
+router.get(
+    "/:id",
+    asyncHandler(CastController.getCastById)
+);
 
-router.put("/:id", updateCastValidation, CastController.updateCast);
+router.put(
+    "/:id",
+    updateCastValidation,
+    asyncHandler(CastController.updateCast)
+);
 
-router.delete("/:id", CastController.deleteCast);
+router.delete(
+    "/:id",
+    asyncHandler(CastController.deleteCast)
+);
 
 module.exports = router;
