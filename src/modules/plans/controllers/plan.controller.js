@@ -3,7 +3,7 @@ const { successResponse } = require("../../../shared/helpers/api-response.helper
 
 class PlanController {
 
-    getAll = async (req, res) => {
+    getAll = async(req, res) => {
         const plans = await planService.getAll();
 
         return successResponse(
@@ -15,7 +15,7 @@ class PlanController {
     };
 
 
-    getActive = async (req, res) => {
+    getActive = async(req, res) => {
         const plans = await planService.getActive();
 
         return successResponse(
@@ -27,7 +27,7 @@ class PlanController {
     };
 
 
-    getById = async (req, res) => {
+    getById = async(req, res) => {
         const plan = await planService.getById(req.params.id);
 
         return successResponse(
@@ -39,21 +39,32 @@ class PlanController {
     };
 
 
-    create = async (req, res) => {
-        const planData = {
-            name: req.body.name,
-            description: req.body.description,
-            price: req.body.price,
-            duration: req.body.duration,
-            maxDevices: req.body.maxDevices,
-            maxProfiles: req.body.maxProfiles,
-            quality: req.body.quality,
-            isActive: req.body.isActive,
-            isLimited: req.body.isLimited,
-            maxMovies: req.body.maxMovies,
-            maxSeries: req.body.maxSeries
-        };
+    create = async(req, res) => {
+        const {
+            name,
+            description,
+            price,
+            duration,
+            maxDevices,
+            maxProfiles,
+            quality,
+            isLimited,
+            maxMovies,
+            maxSeries
+        } = req.body;
 
+        const planData = {
+            name,
+            description,
+            price,
+            duration,
+            maxDevices,
+            maxProfiles,
+            quality,
+            isLimited,
+            maxMovies,
+            maxSeries
+        };
         const plan = await planService.create(planData);
 
         return successResponse(
@@ -65,21 +76,33 @@ class PlanController {
     };
 
 
-    update = async (req, res) => {
-        const planData = {
-            name: req.body.name,
-            description: req.body.description,
-            price: req.body.price,
-            duration: req.body.duration,
-            maxDevices: req.body.maxDevices,
-            maxProfiles: req.body.maxProfiles,
-            quality: req.body.quality,
-            isActive: req.body.isActive,
-            isLimited: req.body.isLimited,
-            maxMovies: req.body.maxMovies,
-            maxSeries: req.body.maxSeries
-        };
+    update = async(req, res) => {
+      
+const {
+            name,
+            description,
+            price,
+            duration,
+            maxDevices,
+            maxProfiles,
+            quality,
+            isLimited,
+            maxMovies,
+            maxSeries
+        } = req.body;
 
+        const planData = {
+            name,
+            description,
+            price,
+            duration,
+            maxDevices,
+            maxProfiles,
+            quality,
+            isLimited,
+            maxMovies,
+            maxSeries
+        };
         const plan = await planService.update(
             req.params.id,
             planData
@@ -94,7 +117,7 @@ class PlanController {
     };
 
 
-    remove = async (req, res) => {
+    remove = async(req, res) => {
         await planService.remove(req.params.id);
 
         return successResponse(
@@ -105,7 +128,7 @@ class PlanController {
     };
 
 
-    toggleStatus = async (req, res) => {
+    toggleStatus = async(req, res) => {
         const plan = await planService.toggleStatus(req.params.id);
 
         return successResponse(
@@ -118,4 +141,9 @@ class PlanController {
 
 }
 
+module.exports = new PlanController();
+module.exports = new PlanController();
+module.exports = new PlanController();
+module.exports = new PlanController();
+module.exports = new PlanController();
 module.exports = new PlanController();

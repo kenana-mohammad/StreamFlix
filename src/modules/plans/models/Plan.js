@@ -3,16 +3,16 @@ const { QUALITY } = require('../../../shared/constants/quality.constant');
 
 const planSchema = new mongoose.Schema({
     name: {
-    type: String,
-    required: [true, 'اسم الباقة مطلوب'],
-    trim: true,
-    unique: true
-},
-description: {
-    type: String,
-    trim: true,
-    default: null
-},
+        type: String,
+        required: [true, 'اسم الباقة مطلوب'],
+        trim: true,
+        unique: true
+    },
+    description: {
+        type: String,
+        trim: true,
+        default: null
+    },
     price: {
         type: Number,
         required: [true, 'السعر مطلوب'],
@@ -70,5 +70,7 @@ description: {
 }, {
     timestamps: true
 });
+//method
+
 
 module.exports = mongoose.model('Plan', planSchema);

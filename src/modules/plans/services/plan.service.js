@@ -13,7 +13,11 @@ class PlanService {
     }
 
     async getById(id) {
-        return await Plan.findById(id);
+        const plan = await Plan.findById(id);
+        if (!plan) {
+            throw new AppError("Plan not found", 404);
+        }
+        return plan
     }
 
     async create(data) {
@@ -34,38 +38,60 @@ class PlanService {
 
         }
 
-        return await Plan.create(data);
+        return await Plan.create({
+            name: data.name,
+            description: data.description,
+            price: data.price,
+            duration: data.duration,
+            maxDevices: data.maxDevices,
+            maxProfiles: data.maxProfiles,
+            quality: data.quality,
+            isLimited: data.isLimited ?? false,
+            maxMovies: data.maxMovies,
+            maxSeries: data.maxSeries
+        });
     }
 
-
     async update(id, data) {
-
-        if (data.isLimited === true) {
-
-            if (data.maxMovies == null || data.maxSeries == null) {
-                throw new AppError(
-                    "Limited plans require maxMovies and maxSeries",
-                    400
-                );
-            }
-
-        } else {
-
-            data.maxMovies = 0;
-            data.maxSeries = 0;
-
+        const plan = await Plan.findById(id);
+        if (!plan) {
+            throw new AppError("Plan not found", 404);
         }
 
-        return await Plan.findByIdAndUpdate(
-            id,
-            data,
-            { new: true }
-        );
+        plan.name = data.name ?? plan.name;
+        plan.description = data.description ?? plan.description;
+        plan.price = data.price ?? plan.price;
+        plan.duration = data.duration ?? plan.duration;
+        plan.maxDevices = data.maxDevices ?? plan.maxDevices;
+        plan.maxProfiles = data.maxProfiles ?? plan.maxProfiles;
+        plan.quality = data.quality ?? plan.quality;
+
+        plan.isLimited = data.isLimited ?? plan.isLimited;
+
+        if (plan.isLimited) {
+            plan.maxMovies = data.maxMovies ?? plan.maxMovies;
+            plan.maxSeries = data.maxSeries ?? plan.maxSeries;
+
+            if (plan.maxMovies == null || plan.maxSeries == null) {
+                throw new AppError("Limited plans require maxMovies and maxSeries", 400);
+            }
+        } else {
+            plan.maxMovies = 0;
+            plan.maxSeries = 0;
+        }
+
+        return await plan.save();
     }
 
 
     async remove(id) {
-        return await Plan.findByIdAndDelete(id);
+        const deletedPlan = await Plan.findByIdAndDelete(id);
+
+        if (!deletedPlan) {
+            throw new AppError("Plan not found, cannot delete", 404);
+        }
+
+        return deletedPlan;
     }
 
 
@@ -74,7 +100,7 @@ class PlanService {
         const plan = await Plan.findById(id);
 
         if (!plan) {
-            return null;
+            throw new AppError("Plan not found", 404);
         }
 
         plan.isActive = !plan.isActive;

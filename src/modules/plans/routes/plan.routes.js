@@ -26,17 +26,14 @@ router.get(
 
 // Admin APIs
 router.post(
-    "/",
-    createPlanValidation,
-    validate,
+    "/", [...createPlanValidation],
     asyncHandler(planController.create)
 );
 
 router.put(
-    "/:id",
-    id,
-    updatePlanValidation,
-    validate,
+    "/:id", [id,
+        ...updatePlanValidation
+    ],
     asyncHandler(planController.update)
 );
 
