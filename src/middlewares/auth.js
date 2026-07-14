@@ -1,26 +1,46 @@
 //
 const cookiesService = require('../utils/cookiesService');
 const jwtService = require('./../utils/jwtService');
-const auth = (req, res, next) => {
+const {
+    errorResponse
+} = require("./../shared/helpers/api-response.helper");
+const Device = require('../modules/devices/models/Device');
+const auth = async (req, res, next) => {
     try {
         const token = cookiesService.getAccessToken(req)
 
         if (!token) {
-            return res.status(403).json({
-                msg: "Not Authorized=="
-            })
+
+            return errorResponse(res, 403, "التوكين غير صالح أو انتهت صلاحيته");
         }
 
         const decoded = jwtService.verifyAccessToken(token);
-        req._user = {...decoded }
+        req._user = {
+            ...decoded
+        }
+
+        const device = await Device.findOne({
+            userId: decoded.id,
+            deviceId: decoded.deviceId
+        });
+
+
+        if (!device) {
+
+            cookiesService.clearTokens(res);
+
+            return res.status(401).json({
+                message: "تم تسجيل الخروج من هذا الجهاز"
+            });
+
+        }
         console.log(decoded)
+
         next()
 
     } catch (error) {
 
-        return res.status(403).json({
-            msg: "Not Authorized"
-        })
+        return errorResponse(res, 403, "التوكين غير صالح أو انتهت صلاحيته");
     }
 
 }

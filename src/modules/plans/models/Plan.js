@@ -5,9 +5,14 @@ const planSchema = new mongoose.Schema({
     name: {
         type: String,
         required: [true, 'اسم الباقة مطلوب'],
-        trim: true
+        trim: true,
+        unique: true
     },
-
+    description: {
+        type: String,
+        trim: true,
+        default: null
+    },
     price: {
         type: Number,
         required: [true, 'السعر مطلوب'],
@@ -34,19 +39,38 @@ const planSchema = new mongoose.Schema({
 
     quality: {
         type: String,
+        required: [true, 'جودة البث مطلوبة'],
         enum: {
             values: Object.values(QUALITY),
-            message: 'جودة غير صالحة'
-        },
-        required: [true, 'جودة العرض مطلوبة']
+            message: 'الجودة المحددة غير مدعومة'
+        }
     },
 
     isActive: {
         type: Boolean,
         default: true
+    },
+
+    isLimited: {
+        type: Boolean,
+        default: false
+    },
+
+    maxMovies: {
+        type: Number,
+        default: 0,
+        min: [0, 'عدد الأفلام لا يمكن أن يكون سالباً']
+    },
+
+    maxSeries: {
+        type: Number,
+        default: 0,
+        min: [0, 'عدد المسلسلات لا يمكن أن يكون سالباً']
     }
 }, {
     timestamps: true
 });
+//method
+
 
 module.exports = mongoose.model('Plan', planSchema);
