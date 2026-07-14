@@ -1,127 +1,84 @@
-const { validationResult } = require("express-validator");
+const { successResponse } = require("../../../shared/helpers/api-response.helper");
 const CastService = require("../services/cast.service");
 
+class CastController {
 // Create Cast
-const createCast = async (req, res) => {
-
-    const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-        return res.status(400).json({
-            success: false,
-            errors: errors.array(),
-        });
-    }
+ createCast = async (req, res) => {
     
     const { name , image , biography } = req.body;
     const cast = await CastService.createCast({ name, image, biography });
 
-    return res.status(201).json({
-        success: true,
-        message: "Cast created successfully",
-        data: cast,
-    });
+      return successResponse(res, 200,
+        "Cast member created successfully", 
+        cast)
 
 };
 
 // Get All Casts
-const getAllCasts = async (req, res) => {
+ getAllCasts = async (req, res) => {
 
     const casts = await CastService.getAllCasts();
 
-    return res.status(200).json({
-        success: true,
-        data: casts,
-    });
+    return successResponse(res, 200,
+        "Cast members found successfully", 
+        casts
+    )
 
 };
 
 // Get Cast By Id
-const getCastById = async (req, res) => {
+ getCastById = async (req, res) => {
+    const { id } = req.params;
+    const cast = await CastService.getCastById(id);
 
-    const cast = await CastService.getById(req.params.id);
-
-    if (!cast) {
-        return res.status(404).json({
-            success: false,
-            message: "Cast not found",
-        });
-    }
-
-    return res.status(200).json({
-        success: true,
-        data: cast,
-    });
+    return successResponse(res, 200,
+        "Cast member found successfully", 
+        cast
+    )
 
 };
 
 // Update Cast
-const updateCast = async (req, res) => {
+ updateCast = async (req, res) => {
+    const { id } = req.params;
+    const { name , image , biography } = req.body;
+    const data = { name , image , biography }
+    const updateCast = await CastService.updateCast(id, data);
 
-    const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-        return res.status(400).json({
-            success: false,
-            errors: errors.array(),
-        });
-    }
-
-    const cast = await CastService.update(req.params.id, req.body);
-
-    if (!cast) {
-        return res.status(404).json({
-            success: false,
-            message: "Cast not found",
-        });
-    }
-
-    return res.status(200).json({
-        success: true,
-        message: "Cast updated successfully",
-        data: cast,
-    });
+    return successResponse(res, 200,
+        "Cast member updated successfully", 
+        updateCast
+    )
 
 };
 
 // Delete Cast
-const deleteCast = async (req, res) => {
+ deleteCast = async (req, res) => {
+    const { id } = req.params
+     await CastService.deleteCast(id);
 
-    const cast = await CastService.delete(req.params.id);
 
-    if (!cast) {
-        return res.status(404).json({
-            success: false,
-            message: "Cast not found",
-        });
-    }
-
-    return res.status(200).json({
-        success: true,
-        message: "Cast deleted successfully",
-    });
+    return successResponse(res , 200,
+        "Cast member deleted successfully"
+    )
+   
 
 };
 
 // Search Cast
-const searchCast = async (req, res) => {
+ searchCast = async (req, res) => {
 
     const name = req.query.name || "";
 
     const casts = await CastService.searchCast(name);
 
-    return res.status(200).json({
-        success: true,
-        data: casts,
-    });
+    return successResponse(res, 200,
+        "Cast member search results returned successfully", 
+        casts
+    )
 
 };
 
-module.exports = {
-    createCast,
-    getAllCasts,
-    getCastById,
-    updateCast,
-    deleteCast,
-    searchCast,
-};
+}
+
+module.exports = new CastController()
