@@ -24,9 +24,19 @@ class UserController {
     getMyProfile = async (req, res) => {
         const userId = req._user.id;
 
-        const user = await userService.getMyProfile(userId);
-        return successResponse(res, 200, 'عرض الملف الشخصي', user);
+        const user = await User.findById(userId)
+            .select("-password");
 
+        if (!user) {
+            return res.status(404).json({
+                message: "المستخدم غير موجود"
+            });
+        }
+
+        return res.status(200).json({
+            message: "بيانات الحساب",
+            user
+        });
 
     }
     //===============
@@ -39,13 +49,32 @@ class UserController {
             phone
         } = req.body;
 
-        const user = await userService.updateMyProfile(userId, name,
-            phone);
 
-        return successResponse(res, 201, 'تم تحديث البيانات بنجاح', user);
+        const user = await User.findById(userId);
 
 
+        if (!user) {
+            return res.status(404).json({
+                message: "المستخدم غير موجود"
+            });
+        }
 
+
+        user.name = name || user.name;
+        user.phone = phone || user.phone;
+
+
+        await user.save();
+
+
+        const userData = user.toObject();
+        delete userData.password;
+
+
+        return res.status(200).json({
+            message: "تم تحديث البيانات بنجاح",
+            user: userData
+        });
     };
 }
 

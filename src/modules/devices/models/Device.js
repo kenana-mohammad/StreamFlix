@@ -16,6 +16,11 @@ const deviceSchema = new Schema({
         type: String,
         required: true
     },
+    deviceId: {
+        type: String,
+        required: true,
+        index: true
+    },
     deviceType: {
         type: String,
         enum: {
