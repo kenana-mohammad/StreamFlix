@@ -10,7 +10,7 @@ class DashboardController {
         return errorResponse(res, 404, "Dashboard statistics not found");
     }
        return successResponse(res, 200, 
-            "User information retrieved successfully",
+            "Dashboard statistics retrieved successfully",
             { data: stats }
         );
   }
