@@ -37,6 +37,8 @@ app.get('/api/health', (req, res) => {
 
 app.use('/api/genres', genreRoutes);
 
+app.use('/api/v1/dashboard', require('./modules/dashboard/routes/dashboard.routes'));
+app.use('/api/v1/dashboard/users', require('./modules/dashboard/routes/dashboard.users.route'));
 
 app.use(notFound);
 app.use(errorHandler);

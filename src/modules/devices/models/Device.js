@@ -30,7 +30,7 @@ const deviceSchema = new Schema({
     lastActive: {
         type: Date,
         default: Date.now
-    }
+    } 
 }, {
     timestamps: true
 });
