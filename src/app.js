@@ -40,6 +40,9 @@ app.use('/api/v1/auth', require("./modules/auth/routes/auth.routes"));
 app.use('/api/v1/users', require("./modules/users/routes/user.routes"));
 
 app.use('/api/v1/devices', require("./modules/devices/routes/device.routes"));
+app.use('/api/v1/dashboard', require('./modules/dashboard/routes/dashboard.routes'));
+app.use('/api/v1/dashboard/users', require('./modules/dashboard/routes/dashboard.users.route'));
+
 app.use(notFound);
 app.use(errorHandler);
 
