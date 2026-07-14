@@ -35,7 +35,7 @@ app.get('/api/health', (req, res) => {
 });
 
 const dashRoutes = require('./modules/dashboard/index');
-app.use('/api', dashRoutes);
+app.use('/api/v1/admin', dashRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

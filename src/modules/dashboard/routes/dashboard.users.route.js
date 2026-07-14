@@ -23,4 +23,8 @@ router.put("/disable/:id",
      [auth, userIdValidation, role(SUPER_ADMIN)],
      asyncHandler(DashboardUsersController.disableAccount));
 
+router.post("/create/content-manager",
+     [auth, role(SUPER_ADMIN)],
+     asyncHandler(DashboardUsersController.createContentManager));
+
 module.exports = router;
