@@ -30,6 +30,7 @@ const xssSanitize = require('./middlewares/xss');
 app.use(xssSanitize);
 app.use(express.static('public'))
 
+const genreRoutes = require("./modules/genres");
 //========================================================
 
 app.get('/api/health', (req, res) => {
@@ -42,6 +43,8 @@ app.use("/api/plans", planRoutes);
 app.use('/api/v1/auth', require("./modules/auth/routes/auth.routes"));
 //profile
 app.use('/api/v1/users', require("./modules/users/routes/user.routes"));
+
+app.use('/api/genres', genreRoutes);
 
 app.use('/api/v1/devices', require("./modules/devices/routes/device.routes"));
 app.use('/api/v1/dashboard', require('./modules/dashboard/routes/dashboard.routes'));

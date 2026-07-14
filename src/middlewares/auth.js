@@ -10,6 +10,7 @@ const auth = async (req, res, next) => {
         const token = cookiesService.getAccessToken(req)
 
         if (!token) {
+
             return errorResponse(res, 403, "التوكين غير صالح أو انتهت صلاحيته");
         }
 
