@@ -3,10 +3,11 @@ const { QUALITY } = require('../../../shared/constants/quality.constant');
 
 const planSchema = new mongoose.Schema({
     name: {
-        type: String,
-        required: [true, 'اسم الباقة مطلوب'],
-        trim: true
-    },
+    type: String,
+    required: [true, 'اسم الباقة مطلوب'],
+    trim: true,
+    unique: true
+},
 description: {
     type: String,
     trim: true,
