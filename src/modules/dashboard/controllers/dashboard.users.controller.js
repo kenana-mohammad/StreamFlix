@@ -36,19 +36,12 @@ class DashboardUsersController {
             return errorResponse(res, 404, "User not found");
         }
 
-        if (!subscription) {
             return successResponse(res, 200,
                 "User's Account Enabled Successfully",
-                { data: userEnabled }
+                { data: userEnabled , subscription : subscription || "NOT SUBSCRIBED" }
             )
         }
-        else {
-            return successResponse(res, 200,
-                "User's Account and subscription Enabled Successfully",
-                { data: userEnabled , subscription }
-            )
-        }
-    }
+    
 
     async disableAccount (req, res) {
         const { id } = req.params;
@@ -56,19 +49,11 @@ class DashboardUsersController {
         if(!userDisabled) {
             return errorResponse(res, 404, "User not found");
         }
-        
-        if (!subscription) {
-            return successResponse(res, 200,
-                "User's Account Disabled Successfully",
-                { data: userDisabled }
-            )
-        }
-        else {
-            return successResponse(res, 200,
-                "User's Account and subscription Disabled Successfully",
-                { data: userDisabled, subscription }
-            )
-        }
+
+        return successResponse(res, 200,
+            "User's Account Disabled Successfully",
+            { data: userDisabled, subscription : subscription || "NOT SUBSCRIBED" }
+        )
     }
 
     async createContentManager(req, res) {
@@ -86,7 +71,7 @@ class DashboardUsersController {
 
        return successResponse(res, 200,
            "Content manager created successfully",
-           { data: contentManager }
+             contentManager 
        )
     }
 }

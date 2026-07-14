@@ -8,7 +8,7 @@ const Plan = require('../../plans/models/Plan');
 
 class DashboardService {
     
-    static getStats = async () => {
+     getStats = async () => {
        const userCount = await User.countDocuments();
        const activeUsersCount = await User.countDocuments();
        const seriesCount = await Series.countDocuments();
@@ -35,5 +35,5 @@ class DashboardService {
    
 }
 
-module.exports = DashboardService;
+module.exports = new DashboardService();
 

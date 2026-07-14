@@ -7,7 +7,7 @@ const {SUBSCRIPTION_STATUS} = require('../../../shared/constants/subscription-st
 const {ROLES} = require('../../../shared/constants/roles.constant');
 
 class DashboardUsersService {
-  static searchUser = async (query) => {
+     searchUser = async (query) => {
        const regex = new RegExp(query, 'i');
        const users = await User.find({
            $or: [
@@ -19,8 +19,8 @@ class DashboardUsersService {
 
        return users;
       }
-   
-      static getUserInfo = async (userId) => {
+
+        getUserInfo = async (userId) => {
           const userInfo = await User.findById(userId);
           if (!userInfo) {
               throw new AppError("User not found", 404);
@@ -30,7 +30,7 @@ class DashboardUsersService {
           return { userInfo, profileCount, userProfiles };
       }
 
-      static enableAccount = async (userId) => {
+         enableAccount = async (userId) => {
          const user = await User.findById(userId);
          const subscription = await Subscription.findOne({ user: userId });
          if (!user) {
@@ -42,12 +42,13 @@ class DashboardUsersService {
          if (subscription) {
              subscription.status = SUBSCRIPTION_STATUS.ACTIVE;
              await subscription.save();
+             return { userEnabled: user, subscription: subscription };
          }
 
-         return  { userEnabled: user, subscription : subscription } 
+         return  { userEnabled: user, subscription : null } 
       }
 
-      static disableAccount = async (userId) => {
+        disableAccount = async (userId) => {
         const user = await User.findById(userId);
         const subscription = await Subscription.findOne({ user: userId });
         if (!user) {
@@ -58,11 +59,14 @@ class DashboardUsersService {
          if (subscription) {
              subscription.status = SUBSCRIPTION_STATUS.CANCELLED;
              await subscription.save();
+             return { userDisabled: user, subscription : subscription }
          }
-        return  { userDisabled: user, subscription} 
+         else {
+             return { userDisabled: user , subscription: null }
+         }
       }
 
-      static createContentManager = async ( name , email , password , phone) => {
+        createContentManager = async ( name , email , password , phone) => {
         const user = await User.create({
           name : name,
           email: email,
@@ -77,4 +81,4 @@ class DashboardUsersService {
 
 }
 
-module.exports = DashboardUsersService;
+module.exports =  new DashboardUsersService();
