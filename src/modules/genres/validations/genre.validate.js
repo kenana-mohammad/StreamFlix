@@ -1,44 +1,47 @@
 const { body, param } = require("express-validator");
 
+const validate = require("../../../middlewares/validate");
 
 const createGenreValidation = [
-  body("name")
+    body("name")
     .trim()
     .notEmpty()
     .withMessage("Genre name is required"),
 
-  body("description")
+    body("description")
     .optional()
-    .trim()
+    .trim(), validate
 ];
 
 
 const updateGenreValidation = [
-  param("id")
+    param("id")
     .isMongoId()
     .withMessage("Invalid genre id"),
 
-  body("name")
+    body("name")
     .optional()
     .trim()
     .notEmpty()
     .withMessage("Genre name cannot be empty"),
 
-  body("description")
+    body("description")
     .optional()
-    .trim()
+    .trim(), validate
+
 ];
 
 
 const idValidation = [
-  param("id")
+    param("id")
     .isMongoId()
-    .withMessage("Invalid genre id")
+    .withMessage("Invalid genre id"), validate
+
 ];
 
 
 module.exports = {
-  createGenreValidation,
-  updateGenreValidation,
-  idValidation
+    createGenreValidation,
+    updateGenreValidation,
+    idValidation
 };
