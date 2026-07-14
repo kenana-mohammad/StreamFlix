@@ -31,9 +31,13 @@ app.use(xssSanitize);
 app.use(express.static('public'))
 
 //========================================================
+
 app.get('/api/health', (req, res) => {
     return res.status(200).json('the api is healthy')
 });
+const planRoutes = require("./modules/plans");
+
+app.use("/api/plans", planRoutes);
 // auth
 app.use('/api/v1/auth', require("./modules/auth/routes/auth.routes"));
 //profile
