@@ -10,16 +10,18 @@ const { changeStatusValidator } = require('../validations/content.validation');
 const asyncHandler = require('../../../utils/asyncHandler');
 
 // Admin & Content Manager Routes
-router.post('/admin', auth, role(['admin', 'content_manager']), createEpisodeValidator, validate, asyncHandler(episodeController.create));
+router.post('/admin/season/:seasonId',
+    // auth, role(['admin', 'content_manager']),
+    createEpisodeValidator, validate, asyncHandler(episodeController.create));
 router.put('/admin/:id', auth, role(['admin', 'content_manager']), episodeIdValidator, updateEpisodeValidator, validate, asyncHandler(episodeController.update));
 router.patch('/admin/:id/status', auth, role(['admin', 'content_manager']), episodeIdValidator, changeStatusValidator, validate, asyncHandler(episodeController.changeStatus));
 router.delete('/admin/:id', auth, role(['admin', 'content_manager']), episodeIdValidator, validate, asyncHandler(episodeController.delete));
 
 // Public/Client Routes
 router.get('/:id', episodeIdValidator, asyncHandler(episodeController.getById));
-router.get('/season/:seasonId', 
-    param('seasonId').isMongoId().withMessage('Season ID is invalid'), 
-    validate, 
+router.get('/season/:seasonId',
+    param('seasonId').isMongoId().withMessage('Season ID is invalid'),
+    validate,
     asyncHandler(episodeController.getBySeason)
 );
 

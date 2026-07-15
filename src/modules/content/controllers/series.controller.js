@@ -2,37 +2,37 @@ const seriesService = require('../services/series.service');
 const { successResponse } = require('../../../shared/helpers/api-response.helper');
 
 class SeriesController {
-    create = async (req, res) => {
+    create = async(req, res) => {
         const { title, description, poster, ageRating, trailerUrl, releaseYear, status, publishAt, totalSeasons } = req.body;
         const data = { title, description, poster, ageRating, trailerUrl, releaseYear, status, publishAt, totalSeasons };
-
+        const { seriesId } = req.params;
         const result = await seriesService.createSeries(data);
-        return successResponse(res, 201, 'Series created successfully', result); 
+        return successResponse(res, 201, 'Series created successfully', result);
     };
 
-    getAllForAdmin = async (req, res) => {
-        const series = await seriesService.getSeries(true); 
+    getAllForAdmin = async(req, res) => {
+        const series = await seriesService.getSeries(true);
         return successResponse(res, 200, 'All series fetched successfully', series);
     };
 
-    getByIdForAdmin = async (req, res) => {
+    getByIdForAdmin = async(req, res) => {
         const { id } = req.params;
         const series = await seriesService.getSeriesById(id, true);
         return successResponse(res, 200, 'Series details fetched successfully', series);
     };
 
-    getAllForClient = async (req, res) => {
-        const series = await seriesService.getSeries(false); 
+    getAllForClient = async(req, res) => {
+        const series = await seriesService.getSeries(false);
         return successResponse(res, 200, 'Available series fetched successfully', series);
     };
 
-    getByIdForClient = async (req, res) => {
+    getByIdForClient = async(req, res) => {
         const { id } = req.params;
         const series = await seriesService.getSeriesById(id, false);
         return successResponse(res, 200, 'Series details fetched successfully', series);
     };
 
-    update = async (req, res) => {
+    update = async(req, res) => {
         const { id } = req.params;
         const { title, description, poster, ageRating, trailerUrl, releaseYear, status, publishAt, totalSeasons } = req.body;
         const data = { title, description, poster, ageRating, trailerUrl, releaseYear, status, publishAt, totalSeasons };
@@ -41,7 +41,7 @@ class SeriesController {
         return successResponse(res, 200, 'Series updated successfully', series);
     };
 
-    changeStatus = async (req, res) => {
+    changeStatus = async(req, res) => {
         const { id } = req.params;
         const { status } = req.body;
 
@@ -49,7 +49,7 @@ class SeriesController {
         return successResponse(res, 200, 'Series status updated successfully', series);
     };
 
-    delete = async (req, res) => {
+    delete = async(req, res) => {
         const { id } = req.params;
         await seriesService.deleteSeries(id);
         return successResponse(res, 200, 'Series deleted successfully', null);

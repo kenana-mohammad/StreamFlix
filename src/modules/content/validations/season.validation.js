@@ -1,7 +1,7 @@
 const { body, param } = require('express-validator');
 
 const createSeasonValidator = [
-    body('seriesId').isMongoId().withMessage('Series ID is invalid'),
+    param('seriesId').isMongoId().withMessage('Series ID is invalid'),
     body('seasonNumber').isInt({ min: 1 }).withMessage('Season number is required and must be a positive integer'),
     body('title').optional().isString().trim(),
 ];

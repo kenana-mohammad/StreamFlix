@@ -63,7 +63,6 @@ const contentSchema = new Schema({
             values: Object.values(CONTENT_STATUS),
             message: 'Content status is invalid'
         },
-        default: CONTENT_STATUS.DRAFT
     },
     publishAt: {
         type: Date,

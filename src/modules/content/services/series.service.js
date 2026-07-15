@@ -11,10 +11,19 @@ const useTransaction = process.env.USE_TRANSACTIONS === 'true';
 
 class SeriesService {
     async createSeries(data) {
-const session = useTransaction ? await mongoose.startSession() : null;
-        if (session)  session.startTransaction();
+
+        const session = useTransaction ? await mongoose.startSession() : null;
+        if (session) session.startTransaction();
 
         try {
+            const now = new Date();
+            let status = data.status || CONTENT_STATUS.DRAFT;
+
+            if (data.publishAt && new Date(data.publishAt) > now) {
+                status = CONTENT_STATUS.DRAFT;
+            } else {
+                status = CONTENT_STATUS.PUBLISHED;
+            }
             const content = await Content.create([{
                 title: data.title,
                 description: data.description,
@@ -23,7 +32,7 @@ const session = useTransaction ? await mongoose.startSession() : null;
                 ageRating: data.ageRating,
                 trailerUrl: data.trailerUrl,
                 releaseYear: data.releaseYear,
-                status: data.status || CONTENT_STATUS.DRAFT,
+                status: status,
                 publishAt: data.publishAt
             }], { session });
 
@@ -32,7 +41,7 @@ const session = useTransaction ? await mongoose.startSession() : null;
             }], { session });
 
             if (session) await session.commitTransaction();
-           if (session)  session.endSession();
+            if (session) session.endSession();
 
             return { series: series[0], content: content[0] };
         } catch (error) {
@@ -45,35 +54,35 @@ const session = useTransaction ? await mongoose.startSession() : null;
     async getSeries(isAdmin = false) {
         const matchCondition = isAdmin ? {} : { status: CONTENT_STATUS.PUBLISHED };
         const series = await Series.find().populate({
-            path: 'contentId',
-            match: matchCondition
-        })
-        .populate({
-            path: 'seasons',
-            match: matchCondition,
-            populate: {
-                path: 'episodes',
+                path: 'contentId',
+                match: matchCondition
+            })
+            .populate({
+                path: 'seasons',
                 match: matchCondition,
-            }
-        });
+                populate: {
+                    path: 'episodes',
+                    match: matchCondition,
+                }
+            });
         return series.filter(s => s.contentId !== null);
     }
 
     async getSeriesById(id, isAdmin = false) {
         const matchCondition = isAdmin ? {} : { status: CONTENT_STATUS.PUBLISHED };
         const series = await Series.findById(id)
-        .populate({
-            path: 'contentId',
-            match: matchCondition
-        })
-        .populate({
-            path: 'seasons',
-            match: matchCondition,
-            populate: {
-                path: 'episodes',
+            .populate({
+                path: 'contentId',
                 match: matchCondition
-            }
-        });
+            })
+            .populate({
+                path: 'seasons',
+                match: matchCondition,
+                populate: {
+                    path: 'episodes',
+                    match: matchCondition
+                }
+            });
 
         if (!series || !series.contentId) {
             throw new AppError('Series not found or not available', 404);
@@ -85,7 +94,14 @@ const session = useTransaction ? await mongoose.startSession() : null;
         const series = await Series.findById(id);
         if (!series) throw new AppError('Series not found', 404);
 
-        const contentFields = ['title', 'description', 'poster', 'ageRating', 'trailerUrl', 'releaseYear'];
+        if (data.publishAt !== undefined) {
+            const now = new Date();
+            const publishDate = new Date(data.publishAt);
+
+
+            data.status = (publishDate <= now) ? CONTENT_STATUS.PUBLISHED : CONTENT_STATUS.DRAFT;
+        }
+        const contentFields = ['title', 'description', 'poster', 'ageRating', 'trailerUrl', 'releaseYear', 'status', 'publishAt'];
         const contentData = {};
         const seriesData = {};
 
@@ -94,7 +110,7 @@ const session = useTransaction ? await mongoose.startSession() : null;
             else seriesData[key] = data[key];
         }
 
-const session = useTransaction ? await mongoose.startSession() : null;
+        const session = useTransaction ? await mongoose.startSession() : null;
         if (session) session.startTransaction();
 
         try {
@@ -104,12 +120,12 @@ const session = useTransaction ? await mongoose.startSession() : null;
             if (Object.keys(seriesData).length > 0) {
                 await Series.findByIdAndUpdate(id, seriesData, { new: true, runValidators: true, session });
             }
-            
-            if (session)   await session.commitTransaction();
-            if (session)  session.endSession();
+
+            if (session) await session.commitTransaction();
+            if (session) session.endSession();
         } catch (error) {
             if (session) await session.abortTransaction();
-            if (session)  session.endSession();
+            if (session) session.endSession();
             throw error;
         }
 
@@ -128,8 +144,8 @@ const session = useTransaction ? await mongoose.startSession() : null;
         const series = await Series.findById(id);
         if (!series) throw new AppError('Series not found', 404);
 
-const session = useTransaction ? await mongoose.startSession() : null;
-        if (session)  session.startTransaction();
+        const session = useTransaction ? await mongoose.startSession() : null;
+        if (session) session.startTransaction();
 
         try {
             await Episode.deleteMany({ seriesId: id }, { session });

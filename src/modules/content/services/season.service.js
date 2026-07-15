@@ -8,37 +8,35 @@ const { CONTENT_STATUS } = require('../../../shared/constants/content-status.con
 const useTransaction = process.env.USE_TRANSACTIONS === 'true';
 
 class SeasonService {
-    async createSeason(data) {
-        const seriesExists = await Series.findById(data.seriesId);
+    async createSeason(data, seriesId) {
+        const seriesExists = await Series.findById(seriesId);
         if (!seriesExists) {
             throw new AppError('Series not found', 404);
         }
 
-const session = useTransaction ? await mongoose.startSession() : null;
-if (session) session.startTransaction();
+        const session = useTransaction ? await mongoose.startSession() : null;
+        if (session) session.startTransaction();
 
         try {
             const season = await Season.create([{
-                seriesId: data.seriesId,
+                seriesId: seriesId,
                 seasonNumber: data.seasonNumber,
                 title: data.title,
             }], { session });
 
             await Series.findByIdAndUpdate(
-                data.seriesId,
-                { $inc: { totalSeasons: 1 } },
-                { session }
+                data.seriesId, { $inc: { totalSeasons: 1 } }, { session }
             );
 
             if (session) await session.commitTransaction();
-                if (session)  session.endSession();
-            
+            if (session) session.endSession();
+
 
             return season[0];
         } catch (error) {
             if (session) await session.abortTransaction();
-                if (session) session.endSession();
-            
+            if (session) session.endSession();
+
             throw error;
         }
     }
@@ -59,32 +57,30 @@ if (session) session.startTransaction();
         if (!season) throw new AppError('Season not found', 404);
         return season;
     }
-    
+
     async deleteSeason(id) {
         const season = await Season.findById(id);
         if (!season) throw new AppError('Season not found', 404);
 
-const session = useTransaction ? await mongoose.startSession() : null;
-if (session) session.startTransaction();
+        const session = useTransaction ? await mongoose.startSession() : null;
+        if (session) session.startTransaction();
 
         try {
             await Episode.deleteMany({ seasonId: id }, { session });
 
             await Series.findByIdAndUpdate(
-                season.seriesId,
-                { $inc: { totalSeasons: -1 } },
-                { session }
+                season.seriesId, { $inc: { totalSeasons: -1 } }, { session }
             );
 
             await Season.findByIdAndDelete(id, { session });
-            
+
             if (session) await session.commitTransaction();
-                if (session)  session.endSession();
-            
+            if (session) session.endSession();
+
             return true;
         } catch (error) {
             if (session) await session.abortTransaction();
-                if (session) session.endSession();
+            if (session) session.endSession();
             throw error;
         }
     }

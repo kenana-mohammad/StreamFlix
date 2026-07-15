@@ -33,14 +33,14 @@ const episodeSchema = new Schema({
         type: String,
         required: true
     },
-    status: {
-        type: String,
-        enum: {
-            values: Object.values(CONTENT_STATUS),
-            message: 'Episode status is invalid'
-        },
-        default: CONTENT_STATUS.DRAFT
-    }
+    // status: {
+    //     type: String,
+    //     enum: {
+    //         values: Object.values(CONTENT_STATUS),
+    //         message: 'Episode status is invalid'
+    //     },
+    //     default: CONTENT_STATUS.DRAFT
+    // }
 }, {
     timestamps: true
 });

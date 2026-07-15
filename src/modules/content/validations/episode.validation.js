@@ -1,7 +1,7 @@
 const { body, param } = require('express-validator');
 
 const createEpisodeValidator = [
-    body('seasonId').isMongoId().withMessage('Season ID is invalid'),
+    param('seasonId').isMongoId().withMessage('Season ID is invalid'),
     body('episodeNumber').isInt({ min: 1 }).withMessage('Episode number is required'),
     body('title').trim().notEmpty().withMessage('Episode title is required'),
     body('description').optional().isString(),

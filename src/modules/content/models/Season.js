@@ -18,22 +18,22 @@ const seasonSchema = new Schema({
         required: true,
         trim: true
     },
-    status: {
-        type: String,
-        enum: {
-            values: Object.values(CONTENT_STATUS),
-            message: 'Season status is invalid'
-        },
-        default: CONTENT_STATUS.DRAFT
-    }
+    // status: {
+    //     type: String,
+    //     enum: {
+    //         values: Object.values(CONTENT_STATUS),
+    //         message: 'Season status is invalid'
+    //     },
+    //     default: CONTENT_STATUS.DRAFT
+    // }
 }, {
     timestamps: true
 });
 
 seasonSchema.virtual('episodes', {
     ref: 'Episode',
-    localField: '_id', 
-    foreignField: 'seasonId' 
+    localField: '_id',
+    foreignField: 'seasonId'
 });
 
 seasonSchema.set('toObject', { virtuals: true });
