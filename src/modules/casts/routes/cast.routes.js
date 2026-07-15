@@ -21,10 +21,7 @@ router.get(
     asyncHandler(CastController.getAllCasts)
 );
 
-router.get(
-    "/search",
-    asyncHandler(CastController.searchCast)
-);
+
 
 router.get(
     "/:id",
