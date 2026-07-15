@@ -34,6 +34,10 @@ const genreRoutes = require("./modules/genres");
 //========================================================
 
 app.get('/api/health', (req, res) => {
+        return res.status(200).json('the api is healthy')
+    })
+    //cast
+app.use('/api/v1/cast', require('./modules/casts/routes/cast.routes'));
     return res.status(200).json('the api is healthy')
 });
 const planRoutes = require("./modules/plans");
