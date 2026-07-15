@@ -6,15 +6,18 @@ const auth = require('../../../middlewares/Auth');
 const role = require('../../../middlewares/Role');
 const { createSeriesValidator, seriesIdValidator, updateSeriesValidator } = require('../validations/series.validation');
 const { changeStatusValidator } = require('../validations/content.validation'); 
+const asyncHandler = require('../../../utils/asyncHandler');
 
-router.post('/admin', auth, role(['admin']), createSeriesValidator, validate, seriesController.create);
-router.get('/admin', auth, role(['admin']), seriesController.getAllForAdmin);
-router.get('/admin/:id', auth, role(['admin']), seriesIdValidator, validate, seriesController.getByIdForAdmin);
+// Admin & Content Manager Routes
+router.post('/admin', auth, role(['admin', 'content_manager']), createSeriesValidator, validate, asyncHandler(seriesController.create));
+router.get('/admin', auth, role(['admin', 'content_manager']), asyncHandler(seriesController.getAllForAdmin));
+router.get('/admin/:id', auth, role(['admin', 'content_manager']), seriesIdValidator, validate, asyncHandler(seriesController.getByIdForAdmin));
+router.put('/admin/:id', auth, role(['admin', 'content_manager']), seriesIdValidator, updateSeriesValidator, validate, asyncHandler(seriesController.update));
+router.patch('/admin/:id/status', auth, role(['admin', 'content_manager']), seriesIdValidator, changeStatusValidator, validate, asyncHandler(seriesController.changeStatus));
+router.delete('/admin/:id', auth, role(['admin', 'content_manager']), seriesIdValidator, validate, asyncHandler(seriesController.delete));
 
-router.get('/client', seriesController.getAllForClient);
-router.get('/client/:id', seriesIdValidator, validate, seriesController.getByIdForClient);
+// Client Routes
+router.get('/client', asyncHandler(seriesController.getAllForClient));
+router.get('/client/:id', seriesIdValidator, validate, asyncHandler(seriesController.getByIdForClient));
 
-router.put('/admin/:id', auth, role(['admin']), seriesIdValidator, updateSeriesValidator, validate, seriesController.update);
-router.patch('/admin/:id/status', auth, role(['admin']), seriesIdValidator, changeStatusValidator, validate, seriesController.changeStatus);
-router.delete('/admin/:id', auth, role(['admin']), seriesIdValidator, validate, seriesController.delete);
 module.exports = router;

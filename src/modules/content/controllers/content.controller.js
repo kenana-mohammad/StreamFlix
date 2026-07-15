@@ -1,27 +1,44 @@
 const contentService = require('../services/content.service');
 const { successResponse } = require('../../../shared/helpers/api-response.helper');
-const asyncHandler = require('../../../utils/asyncHandler');
+const { CONTENT_TYPE } = require('../../../shared/constants/content-type.constant'); 
+const AppError = require('../../../shared/errors/AppError');
 
 class ContentController {
-    getAllForAdmin = asyncHandler(async (req, res) => {
-        const contents = await contentService.getAllContent(true, req.query);
+    validateType = (type) => {
+        if (type && !Object.values(CONTENT_TYPE).includes(type)) {
+            throw new AppError(`Invalid type. Must be one of: ${Object.values(CONTENT_TYPE).join(', ')}`, 400);
+        }
+    };
+
+    getAllForAdmin = async (req, res) => {
+        const { type } = req.query;
+        this.validateType(type);
+        const queryOptions = type ? { type } : {};
+
+        const contents = await contentService.getAllContent(true, queryOptions);
         return successResponse(res, 200, 'All content fetched successfully for admin', contents);
-    });
+    };
 
-    getByIdForAdmin = asyncHandler(async (req, res) => {
-        const content = await contentService.getContentById(req.params.id, true);
+    getByIdForAdmin = async (req, res) => {
+        const { id } = req.params;
+        const content = await contentService.getContentById(id, true);
         return successResponse(res, 200, 'Content details fetched successfully for admin', content);
-    });
+    };
 
-    getAllForClient = asyncHandler(async (req, res) => {
-        const contents = await contentService.getAllContent(false, req.query);
+    getAllForClient = async (req, res) => {
+        const { type } = req.query;
+        this.validateType(type);
+        const queryOptions = type ? { type } : {};
+
+        const contents = await contentService.getAllContent(false, queryOptions);
         return successResponse(res, 200, 'Available content fetched successfully', contents);
-    });
+    };
 
-    getByIdForClient = asyncHandler(async (req, res) => {
-        const content = await contentService.getContentById(req.params.id, false);
+    getByIdForClient = async (req, res) => {
+        const { id } = req.params;
+        const content = await contentService.getContentById(id, false);
         return successResponse(res, 200, 'Content details fetched successfully', content);
-    });
+    };
 }
 
 module.exports = new ContentController();

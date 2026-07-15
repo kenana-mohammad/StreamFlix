@@ -7,16 +7,19 @@ const role = require('../../../middlewares/Role');
 const { createSeasonValidator, seasonIdValidator, updateSeasonValidator } = require('../validations/season.validation');
 const { param } = require('express-validator');
 const { changeStatusValidator } = require('../validations/content.validation');
+const asyncHandler = require('../../../utils/asyncHandler');
 
-router.post('/admin', auth, role(['admin']), createSeasonValidator, validate, seasonController.create);
+// Admin & Content Manager Routes
+router.post('/admin', auth, role(['admin', 'content_manager']), createSeasonValidator, validate, asyncHandler(seasonController.create));
+router.put('/admin/:id', auth, role(['admin', 'content_manager']), seasonIdValidator, updateSeasonValidator, validate, asyncHandler(seasonController.update));
+router.patch('/admin/:id/status', auth, role(['admin', 'content_manager']), seasonIdValidator, changeStatusValidator, validate, asyncHandler(seasonController.changeStatus));
+router.delete('/admin/:id', auth, role(['admin', 'content_manager']), seasonIdValidator, validate, asyncHandler(seasonController.delete));
 
+// Public/Client Routes
 router.get('/series/:seriesId', 
-    param('seriesId').isMongoId().withMessage('Series ID is  invalid'), 
+    param('seriesId').isMongoId().withMessage('Series ID is invalid'), 
     validate, 
-    seasonController.getBySeries
+    asyncHandler(seasonController.getBySeries)
 );
-router.put('/admin/:id', auth, role(['admin']), seasonIdValidator, updateSeasonValidator, validate, seasonController.update);
-router.delete('/admin/:id', auth, role(['admin']), seasonIdValidator, validate, seasonController.delete);
-router.patch('/admin/:id/status', auth, role(['admin']), seasonIdValidator, changeStatusValidator, validate, seasonController.changeStatus);
 
 module.exports = router;

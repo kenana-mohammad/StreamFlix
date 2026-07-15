@@ -1,34 +1,44 @@
 const seasonService = require('../services/season.service');
 const { successResponse } = require('../../../shared/helpers/api-response.helper');
-const asyncHandler = require('../../../utils/asyncHandler');
 
 class SeasonController {
-    create = asyncHandler(async (req, res) => {
-        const season = await seasonService.createSeason(req.body);
+    create = async (req, res) => {
+        const { seriesId, seasonNumber, title } = req.body;
+        const data = { seriesId, seasonNumber, title };
+
+        const season = await seasonService.createSeason(data);
         return successResponse(res, 201, 'Season created successfully', season);
-    });
+    };
 
-    getBySeries = asyncHandler(async (req, res) => {
-        const isAdmin = req._user && req._user.role === 'admin';
-        const seasons = await seasonService.getSeasonsBySeriesId(req.params.seriesId, isAdmin);
+    getBySeries = async (req, res) => {
+        const { seriesId } = req.params;
+        const isStaff = req._user && ['admin', 'content_manager'].includes(req._user.role);
+        const seasons = await seasonService.getSeasonsBySeriesId(seriesId, isStaff);
         return successResponse(res, 200, 'The season of this series fetched successfully', seasons);
-    });
+    };
 
-    update = asyncHandler(async (req, res) => {
-        const season = await seasonService.updateSeason(req.params.id, req.body);
+    update = async (req, res) => {
+        const { id } = req.params;
+        const { seasonNumber, title } = req.body;
+        const data = { seasonNumber, title };
+
+        const season = await seasonService.updateSeason(id, data);
         return successResponse(res, 200, 'Season updated successfully', season);
-    });
+    };
 
-    changeStatus = asyncHandler(async (req, res) => {
+    changeStatus = async (req, res) => {
+        const { id } = req.params;
         const { status } = req.body;
-        const season = await seasonService.changeStatus(req.params.id, status);
-        return successResponse(res, 200, 'Season status updated successfully', season);
-    });
 
-    delete = asyncHandler(async (req, res) => {
-        await seasonService.deleteSeason(req.params.id);
+        const season = await seasonService.changeStatus(id, status);
+        return successResponse(res, 200, 'Season status updated successfully', season);
+    };
+
+    delete = async (req, res) => {
+        const { id } = req.params;
+        await seasonService.deleteSeason(id);
         return successResponse(res, 200, 'Season deleted successfully', null);
-    });
+    };
 }
 
 module.exports = new SeasonController();

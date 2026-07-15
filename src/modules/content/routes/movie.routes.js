@@ -6,18 +6,18 @@ const auth = require('../../../middlewares/Auth');
 const role = require('../../../middlewares/Role');
 const { createMovieValidator, movieIdValidator, updateMovieValidator } = require('../validations/movie.validation');
 const { changeStatusValidator } = require('../validations/content.validation'); 
+const asyncHandler = require('../../../utils/asyncHandler');
 
-router.post('/admin', auth, role(['admin']), createMovieValidator, validate, movieController.create);
+// Admin & Content Manager Routes
+router.post('/admin', auth, role(['admin', 'content_manager']), createMovieValidator, validate, asyncHandler(movieController.create));
+router.get('/admin', auth, role(['admin', 'content_manager']), asyncHandler(movieController.getAllForAdmin));
+router.get('/admin/:id', auth, role(['admin', 'content_manager']), movieIdValidator, validate, asyncHandler(movieController.getByIdForAdmin));
+router.put('/admin/:id', auth, role(['admin', 'content_manager']), movieIdValidator, updateMovieValidator, validate, asyncHandler(movieController.update));
+router.patch('/admin/:id/status', auth, role(['admin', 'content_manager']), movieIdValidator, changeStatusValidator, validate, asyncHandler(movieController.changeStatus));
+router.delete('/admin/:id', auth, role(['admin', 'content_manager']), movieIdValidator, validate, asyncHandler(movieController.delete));
 
-router.get('/admin', auth, role(['admin']), movieController.getAllForAdmin);
-
-router.get('/admin/:id', auth, role(['admin']), movieIdValidator, validate, movieController.getByIdForAdmin);
-
-router.get('/client', movieController.getAllForClient);
-router.get('/client/:id', movieIdValidator, validate, movieController.getByIdForClient);
-
-router.put('/admin/:id', auth, role(['admin']), movieIdValidator, updateMovieValidator, validate, movieController.update);
-router.patch('/admin/:id/status', auth, role(['admin']), movieIdValidator, changeStatusValidator, validate, movieController.changeStatus);
-router.delete('/admin/:id', auth, role(['admin']), movieIdValidator, validate, movieController.delete);
+// Client Routes
+router.get('/client', asyncHandler(movieController.getAllForClient));
+router.get('/client/:id', movieIdValidator, validate, asyncHandler(movieController.getByIdForClient));
 
 module.exports = router;
