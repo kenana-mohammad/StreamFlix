@@ -7,10 +7,12 @@ const AppError = require('../../../shared/errors/AppError');
 const { CONTENT_TYPE } = require('../../../shared/constants/content-type.constant');
 const { CONTENT_STATUS } = require('../../../shared/constants/content-status.constant');
 
+const useTransaction = process.env.USE_TRANSACTIONS === 'true';
+
 class SeriesService {
     async createSeries(data) {
-        const session = await mongoose.startSession();
-        session.startTransaction();
+const session = useTransaction ? await mongoose.startSession() : null;
+        if (session)  session.startTransaction();
 
         try {
             const content = await Content.create([{
@@ -29,13 +31,13 @@ class SeriesService {
                 contentId: content[0]._id
             }], { session });
 
-            await session.commitTransaction();
-            session.endSession();
+            if (session) await session.commitTransaction();
+           if (session)  session.endSession();
 
             return { series: series[0], content: content[0] };
         } catch (error) {
-            await session.abortTransaction();
-            session.endSession();
+            if (session) await session.abortTransaction();
+            if (session) session.endSession();
             throw error;
         }
     }
@@ -92,8 +94,8 @@ class SeriesService {
             else seriesData[key] = data[key];
         }
 
-        const session = await mongoose.startSession();
-        session.startTransaction();
+const session = useTransaction ? await mongoose.startSession() : null;
+        if (session) session.startTransaction();
 
         try {
             if (Object.keys(contentData).length > 0) {
@@ -103,11 +105,11 @@ class SeriesService {
                 await Series.findByIdAndUpdate(id, seriesData, { new: true, runValidators: true, session });
             }
             
-            await session.commitTransaction();
-            session.endSession();
+            if (session)   await session.commitTransaction();
+            if (session)  session.endSession();
         } catch (error) {
-            await session.abortTransaction();
-            session.endSession();
+            if (session) await session.abortTransaction();
+            if (session)  session.endSession();
             throw error;
         }
 
@@ -126,8 +128,8 @@ class SeriesService {
         const series = await Series.findById(id);
         if (!series) throw new AppError('Series not found', 404);
 
-        const session = await mongoose.startSession();
-        session.startTransaction();
+const session = useTransaction ? await mongoose.startSession() : null;
+        if (session)  session.startTransaction();
 
         try {
             await Episode.deleteMany({ seriesId: id }, { session });
@@ -138,12 +140,12 @@ class SeriesService {
 
             await Series.findByIdAndDelete(id, { session });
 
-            await session.commitTransaction();
-            session.endSession();
+            if (session) await session.commitTransaction();
+            if (session) session.endSession();
             return true;
         } catch (error) {
-            await session.abortTransaction();
-            session.endSession();
+            if (session) await session.abortTransaction();
+            if (session) session.endSession();
             throw error;
         }
     }

@@ -5,11 +5,12 @@ const AppError = require('../../../shared/errors/AppError');
 const { CONTENT_TYPE } = require('../../../shared/constants/content-type.constant');
 const { CONTENT_STATUS } = require('../../../shared/constants/content-status.constant');
 
+const useTransaction = process.env.USE_TRANSACTIONS === 'true';
+
 class MovieService {
     async createMovie(data) {
-        const session = await mongoose.startSession();
-        session.startTransaction();
-
+const session = useTransaction ? await mongoose.startSession() : null;
+if (session) session.startTransaction();
         try {
             const content = await Content.create([{
                 title: data.title,
@@ -29,13 +30,13 @@ class MovieService {
                 videoUrl: data.videoUrl
             }], { session });
 
-            await session.commitTransaction();
-            session.endSession();
+        if (session)  await session.commitTransaction();
+            if (session) session.endSession();
 
             return { movie: movie[0], content: content[0] };
         } catch (error) {
-            await session.abortTransaction();
-            session.endSession();
+            if (session)  await session.abortTransaction();
+            if (session) session.endSession();
             throw error;
         }
     }
@@ -79,9 +80,8 @@ class MovieService {
             else movieData[key] = data[key];
         }
 
-        const session = await mongoose.startSession();
-        session.startTransaction();
-
+const session = useTransaction ? await mongoose.startSession() : null;
+if (session) session.startTransaction();
         try {
             if (Object.keys(contentData).length > 0) {
                 await Content.findByIdAndUpdate(movie.contentId, contentData, { new: true, runValidators: true, session });
@@ -90,11 +90,11 @@ class MovieService {
                 await Movie.findByIdAndUpdate(id, movieData, { new: true, runValidators: true, session });
             }
             
-            await session.commitTransaction();
-            session.endSession();
+            if (session)  await session.commitTransaction();
+            if (session)   session.endSession();
         } catch (error) {
-            await session.abortTransaction();
-            session.endSession();
+            if (session)   await session.abortTransaction();
+            if (session)  session.endSession();
             throw error;
         }
 
@@ -113,19 +113,18 @@ class MovieService {
         const movie = await Movie.findById(id);
         if (!movie) throw new AppError('Movie not found', 404);
 
-        const session = await mongoose.startSession();
-        session.startTransaction();
-
+const session = useTransaction ? await mongoose.startSession() : null;
+if (session) session.startTransaction();
         try {
             await Content.findByIdAndDelete(movie.contentId, { session });
             await Movie.findByIdAndDelete(id, { session });
             
-            await session.commitTransaction();
-            session.endSession();
+            if (session)   await session.commitTransaction();
+            if (session)   session.endSession();
             return true;
         } catch (error) {
-            await session.abortTransaction();
-            session.endSession();
+            if (session)   await session.abortTransaction();
+            if (session)  session.endSession();
             throw error;
         }
     }

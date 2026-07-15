@@ -3,6 +3,9 @@ const Season = require('../models/Season');
 const Series = require('../models/Series');
 const Episode = require('../models/Episode');
 const AppError = require('../../../shared/errors/AppError');
+const { CONTENT_STATUS } = require('../../../shared/constants/content-status.constant');
+
+const useTransaction = process.env.USE_TRANSACTIONS === 'true';
 
 class SeasonService {
     async createSeason(data) {
@@ -11,8 +14,8 @@ class SeasonService {
             throw new AppError('Series not found', 404);
         }
 
-        const session = await mongoose.startSession();
-        session.startTransaction();
+const session = useTransaction ? await mongoose.startSession() : null;
+if (session) session.startTransaction();
 
         try {
             const season = await Season.create([{
@@ -27,19 +30,20 @@ class SeasonService {
                 { session }
             );
 
-            await session.commitTransaction();
-            session.endSession();
+            if (session) await session.commitTransaction();
+                if (session)  session.endSession();
+            
 
             return season[0];
         } catch (error) {
-            await session.abortTransaction();
-            session.endSession();
+            if (session) await session.abortTransaction();
+                if (session) session.endSession();
+            
             throw error;
         }
     }
 
     async getSeasonsBySeriesId(seriesId, isAdmin = false) {
-        const { CONTENT_STATUS } = require('../../../shared/constants/content-status.constant');
         const matchCondition = isAdmin ? {} : { status: CONTENT_STATUS.PUBLISHED };
         return await Season.find({ seriesId, ...matchCondition }).sort({ seasonNumber: 1 });
     }
@@ -60,8 +64,8 @@ class SeasonService {
         const season = await Season.findById(id);
         if (!season) throw new AppError('Season not found', 404);
 
-        const session = await mongoose.startSession();
-        session.startTransaction();
+const session = useTransaction ? await mongoose.startSession() : null;
+if (session) session.startTransaction();
 
         try {
             await Episode.deleteMany({ seasonId: id }, { session });
@@ -74,12 +78,13 @@ class SeasonService {
 
             await Season.findByIdAndDelete(id, { session });
             
-            await session.commitTransaction();
-            session.endSession();
+            if (session) await session.commitTransaction();
+                if (session)  session.endSession();
+            
             return true;
         } catch (error) {
-            await session.abortTransaction();
-            session.endSession();
+            if (session) await session.abortTransaction();
+                if (session) session.endSession();
             throw error;
         }
     }
