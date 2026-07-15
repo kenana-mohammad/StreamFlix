@@ -1,4 +1,6 @@
 const mongoose = require('mongoose');
+const { CONTENT_STATUS } = require('../../../shared/constants/content-status.constant');
+
 const {
     Schema
 } = mongoose;
@@ -30,7 +32,15 @@ const episodeSchema = new Schema({
     videoUrl: {
         type: String,
         required: true
-    }
+    },
+    // status: {
+    //     type: String,
+    //     enum: {
+    //         values: Object.values(CONTENT_STATUS),
+    //         message: 'Episode status is invalid'
+    //     },
+    //     default: CONTENT_STATUS.DRAFT
+    // }
 }, {
     timestamps: true
 });
