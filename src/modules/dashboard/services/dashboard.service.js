@@ -10,7 +10,6 @@ const { USER_STATUS } = require('../../../shared/constants/user-status.constant'
 class DashboardService {
 
     getStats = async() => {
-        // تنفيذ كافة الاستعلامات بالتوازي لتقليل زمن الاستجابة (Latency)
         const [
             users,
             activeUsers,

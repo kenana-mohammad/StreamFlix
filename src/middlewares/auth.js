@@ -5,20 +5,21 @@ const {
     errorResponse
 } = require("./../shared/helpers/api-response.helper");
 const Device = require('../modules/devices/models/Device');
-const auth = async (req, res, next) => {
+const auth = async(req, res, next) => {
     try {
         const token = cookiesService.getAccessToken(req)
 
         if (!token) {
 
-            return errorResponse(res, 403, "التوكين غير صالح أو انتهت صلاحيته");
+            return errorResponse(res, 403, "يجب تسجيل الدخول");
         }
-
         const decoded = jwtService.verifyAccessToken(token);
         req._user = {
             ...decoded
         }
-
+        console.log(req._user = {
+            ...decoded
+        })
         const device = await Device.findOne({
             userId: decoded.id,
             deviceId: decoded.deviceId
@@ -44,4 +45,6 @@ const auth = async (req, res, next) => {
     }
 
 }
+module.exports = auth
+module.exports = auth
 module.exports = auth

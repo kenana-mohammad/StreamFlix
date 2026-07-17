@@ -18,7 +18,8 @@ const cookies = require('cookie-parser');
 const {
     limiter
 } = require('./middlewares/limiter');
-const cors = require('cors')
+const cors = require('cors');
+
 app.use(cors({
     origin: "*"
 }))
@@ -32,26 +33,22 @@ app.use(xssSanitize);
 app.use(express.static('public'))
 
 const apiRoutes = require('./modules/content/index');
-app.use('/api', apiRoutes);
-const genreRoutes = require("./modules/genres");
+app.use('/api/v1', apiRoutes);
 
 app.get('/api/health', (req, res) => {
         return res.status(200).json('the api is healthy')
     })
-    //cast
-app.use('/api/v1/cast', require('./modules/casts/routes/cast.routes'));
-    return res.status(200).json('the api is healthy')
-});
-const planRoutes = require("./modules/plans");
-
-app.use("/api/plans", planRoutes);
-// auth
+    // auth
 app.use('/api/v1/auth', require("./modules/auth/routes/auth.routes"));
 //profile
 app.use('/api/v1/users', require("./modules/users/routes/user.routes"));
-
-app.use('/api/genres', genreRoutes);
-
+//=============================================
+//cast
+app.use('/api/v1/cast', require('./modules/casts/routes/cast.routes'));
+//plans
+app.use("/api/v1/plans", require("./modules/plans/index"));
+//genres
+app.use("/api/v1/genres", require("./modules/genres/index"));
 //section dashboard routes
 app.use('/api/v1/admin/analytics', require('./modules/dashboard/routes/dashboard.routes'));
 app.use('/api/v1/admin/users', require('./modules/dashboard/routes/dashboard.users.route'));
@@ -65,7 +62,7 @@ app.use(errorHandler);
 
 const mongoose = require('mongoose');
 mongoose.connect(MONGOOSE_URL).then(() => {
-    
+
     schedulerService.init();
     console.log('Scheduler initialized successfully');
 

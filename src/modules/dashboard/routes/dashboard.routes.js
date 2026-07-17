@@ -4,10 +4,10 @@ const DashboardController = require("../controllers/dashboard.controller");
 const asyncHandler = require("../../../utils/asyncHandler");
 const role = require("../../../middlewares/role");
 const auth = require("../../../middlewares/auth");
-const { SUPER_ADMIN } = require("../../../shared/constants/roles.constant");
+const { ROLES } = require("../../../shared/constants/roles.constant");
 
 router.get("/",
-    // [auth, role(SUPER_ADMIN)], 
+    [auth, role(ROLES.SUPER_ADMIN)], 
     asyncHandler(DashboardController.getDashboardData));
 
 module.exports = router;

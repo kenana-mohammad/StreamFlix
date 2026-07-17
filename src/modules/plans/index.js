@@ -1,1 +1,2 @@
-module.exports = require("./routes/plan.routes");
+const router = require("./routes/plan.routes");
+module.exports = router;

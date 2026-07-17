@@ -31,7 +31,7 @@ class PasswordService {
                 throw new Error("Error hashing password: argon2 " + error.message);
             }
         }
-        ///erify
+        ///verify
     async compare(password, hashed) {
         try {
             return await argon2.verify(hashed, password);

@@ -34,7 +34,7 @@ class MovieService {
 
             const movie = await Movie.create([{
                 contentId: content[0]._id,
-                duration: data.duration,
+                duration: data.duration||null,
                 videoUrl: data.videoUrl
             }], { session });
 

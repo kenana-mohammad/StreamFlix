@@ -33,6 +33,7 @@ const watchHistorySchema = new Schema({
     },
     watchedAt: {
         type: Date,
+
         default: Date.now
     }
 }, {

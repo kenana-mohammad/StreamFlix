@@ -35,7 +35,6 @@ class DashboardUsersService {
 
         const subscription = await Subscription.findOne({ user: userId });
 
-        // --- منطق تفعيل الحساب ---
         if (newStatus === 'active') {
             user.status = USER_STATUS.ACTIVE;
 

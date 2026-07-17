@@ -21,11 +21,10 @@ class CookiesService {
         return req.cookies['refreshToken']
     }
     //set data if response to save in front
-    setData = async (res, key, value) => {
+    setData =  (res, key, value) => {
         return res.cookie(key, value, cookieConfig)
 
     }
-    //رح نفصل اخزين كل وحدة الا وقت بالكزيزيز 
     setAccessToken = (res, value) => {
         return res.cookie('accessToken', value, {
             httpOnly: true,

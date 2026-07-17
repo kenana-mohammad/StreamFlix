@@ -5,17 +5,21 @@ const planController = require("../controllers/plan.controller");
 const validate = require("../../../middlewares/validate");
 const id = require("../../../middlewares/id");
 const asyncHandler = require("../../../utils/asyncHandler");
-
+const auth = require("./../../../middlewares/auth");
 const {
     createPlanValidation,
     updatePlanValidation
 } = require("../validations/plan.validation");
+const { ROLES } = require("../../../shared/constants/roles.constant");
+const role = require("../../../middlewares/role");
 
 // Public APIs
-router.get("/", asyncHandler(planController.getAll));
+router.get("/",
+    asyncHandler(planController.getAll));
 // Front APIs
 router.get(
     "/active",
+
     asyncHandler(planController.getActive)
 );
 router.get(
@@ -26,27 +30,26 @@ router.get(
 
 // Admin APIs
 router.post(
-    "/", [...createPlanValidation],
+    "/", [auth, role(ROLES.SUPER_ADMIN), ...createPlanValidation],
+
     asyncHandler(planController.create)
 );
 
 router.put(
     "/:id", [id,
-        ...updatePlanValidation
-    ],
-    asyncHandler(planController.update)
+        ...updatePlanValidation, auth, role(ROLES.SUPER_ADMIN)
+    ], asyncHandler(planController.update)
 );
 
 router.delete(
-    "/:id",
-    id,
+    "/:id", [id, auth, role(ROLES.SUPER_ADMIN)],
     asyncHandler(planController.remove)
 );
 
 router.patch(
-    "/:id/toggle-status",
-    id,
+    "/:id/toggle-status", [id, auth, role(ROLES.SUPER_ADMIN)],
     asyncHandler(planController.toggleStatus)
 );
 
+module.exports = router;
 module.exports = router;

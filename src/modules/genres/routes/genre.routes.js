@@ -35,8 +35,8 @@ router.get(
 
 router.post(
     "/", [
-        // auth,
-        // role([ROLES.SUPER_ADMIN, ROLES.CONTENT_MANAGER]),
+        auth,
+        role([ROLES.SUPER_ADMIN, ROLES.CONTENT_MANAGER]),
         ...createGenreValidation,
 
     ],
@@ -46,8 +46,8 @@ router.post(
 
 router.get(
     "/admin", [
-        // auth,
-        // role([ROLES.SUPER_ADMIN, ROLES.CONTENT_MANAGER])
+        auth,
+        role([ROLES.SUPER_ADMIN, ROLES.CONTENT_MANAGER]),
     ],
     asyncHandler(genreController.getAllAdmin)
 );
@@ -55,9 +55,8 @@ router.get(
 
 router.get(
     "/:id", [
-        // auth,
-        // role([ROLES.SUPER_ADMIN, ROLES.CONTENT_MANAGER]),
-        ...idValidation,
+        auth,
+        role([ROLES.SUPER_ADMIN, ROLES.CONTENT_MANAGER]), ...idValidation,
     ],
     asyncHandler(genreController.getById)
 );
@@ -65,8 +64,8 @@ router.get(
 
 router.put(
     "/:id", [
-        // auth,
-        // role([ROLES.SUPER_ADMIN, ROLES.CONTENT_MANAGER]),
+        auth,
+        role([ROLES.SUPER_ADMIN, ROLES.CONTENT_MANAGER]),
         // ...updateGenreValidation,
     ],
     asyncHandler(genreController.update)
@@ -75,8 +74,8 @@ router.put(
 
 router.delete(
     "/:id", [
-        // auth,
-        // role([ROLES.SUPER_ADMIN, ROLES.CONTENT_MANAGER]),
+        auth,
+        role([ROLES.SUPER_ADMIN, ROLES.CONTENT_MANAGER]),
         ...idValidation,
     ],
     asyncHandler(genreController.delete)

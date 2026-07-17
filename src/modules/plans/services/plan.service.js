@@ -1,4 +1,4 @@
-const Plan = require("../models/plan");
+const Plan = require("../models/Plan");
 const AppError = require("../../../shared/errors/AppError");
 
 class PlanService {

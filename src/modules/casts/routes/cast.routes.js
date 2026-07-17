@@ -11,13 +11,13 @@ const { ROLES } = require("../../../shared/constants/roles.constant");
 
 // Admin APIs
 router.post(
-    "/",
-    //[auth , role(ROLES.SUPER_ADMIN,ROLES.CONTENT_MANAGER)],
+    "/", [auth, role(ROLES.SUPER_ADMIN, ROLES.CONTENT_MANAGER)],
     asyncHandler(CastController.createCast)
 );
 
 router.get(
-    "/",
+    "/", [auth, role(ROLES.SUPER_ADMIN, ROLES.CONTENT_MANAGER)],
+
     asyncHandler(CastController.getAllCasts)
 );
 
@@ -25,18 +25,17 @@ router.get(
 
 router.get(
     "/:id",
+
     asyncHandler(CastController.getCastById)
 );
 
 router.put(
-    "/:id",
-    //[auth , role(ROLES.SUPER_ADMIN,ROLES.CONTENT_MANAGER)],
+    "/:id", [auth, role(ROLES.SUPER_ADMIN, ROLES.CONTENT_MANAGER)],
     asyncHandler(CastController.updateCast)
 );
 
 router.delete(
-    "/:id",
-    //[auth , role(ROLES.SUPER_ADMIN,ROLES.CONTENT_MANAGER)],
+    "/:id", [auth, role(ROLES.SUPER_ADMIN, ROLES.CONTENT_MANAGER)],
     asyncHandler(CastController.deleteCast)
 );
 

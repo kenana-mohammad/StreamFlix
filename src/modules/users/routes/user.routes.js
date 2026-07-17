@@ -1,10 +1,10 @@
 const express = require('express');
 const userController = require('../controllers/user.controller');
-const auth = require('../../../middlewares/auth');
 const asyncHandler = require('../../../utils/asyncHandler');
 const {
     updateProfileValidate
 } = require('../validations/updateProfileValidate');
+const auth = require('../../../middlewares/Auth');
 
 const router = express.Router();
 //profile
