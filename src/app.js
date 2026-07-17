@@ -47,6 +47,9 @@ app.use('/api/v1/users', require("./modules/users/routes/user.routes"));
 app.use('/api/v1/cast', require('./modules/casts/routes/cast.routes'));
 //plans
 app.use("/api/v1/plans", require("./modules/plans/index"));
+
+//ratings
+app.use("/api/v1/ratings", require("./modules/ratings/index"));
 //genres
 app.use("/api/v1/genres", require("./modules/genres/index"));
 //section dashboard routes
