@@ -17,4 +17,13 @@ const seriesSchema = new Schema({
     timestamps: true
 });
 
+seriesSchema.virtual('seasons', {
+    ref: 'Season', 
+    localField: '_id', 
+    foreignField: 'seriesId' 
+});
+
+seriesSchema.set('toObject', { virtuals: true });
+seriesSchema.set('toJSON', { virtuals: true });
+
 module.exports = mongoose.model('Series', seriesSchema);

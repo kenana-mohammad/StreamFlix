@@ -11,9 +11,9 @@ const role = require("../../../middlewares/role");
 const { ROLES } = require("../../../shared/constants/roles.constant");
 
 const {
-  createGenreValidation,
-  updateGenreValidation,
-  idValidation
+    createGenreValidation,
+    updateGenreValidation,
+    idValidation
 } = require("../validations/genre.validate");
 
 const validate = require("../../../middlewares/validate");
@@ -24,8 +24,8 @@ const validate = require("../../../middlewares/validate");
 // =======================
 
 router.get(
-  "/",
-  asyncHandler(genreController.getAll)
+    "/",
+    asyncHandler(genreController.getAll)
 );
 
 
@@ -34,60 +34,51 @@ router.get(
 // =======================
 
 router.post(
-  "/",
-  [
-    auth,
-    role([ROLES.SUPER_ADMIN, ROLES.CONTENT_MANAGER]),
-    ...createGenreValidation,
-    validate
-  ],
-  asyncHandler(genreController.create)
+    "/", [
+        auth,
+        role([ROLES.SUPER_ADMIN, ROLES.CONTENT_MANAGER]),
+        ...createGenreValidation,
+
+    ],
+    asyncHandler(genreController.create)
 );
 
 
 router.get(
-  "/admin",
-  [
-    auth,
-    role([ROLES.SUPER_ADMIN, ROLES.CONTENT_MANAGER])
-  ],
-  asyncHandler(genreController.getAllAdmin)
+    "/admin", [
+        auth,
+        role([ROLES.SUPER_ADMIN, ROLES.CONTENT_MANAGER]),
+    ],
+    asyncHandler(genreController.getAllAdmin)
 );
 
 
 router.get(
-  "/:id",
-  [
-    auth,
-    role([ROLES.SUPER_ADMIN, ROLES.CONTENT_MANAGER]),
-    ...idValidation,
-    validate
-  ],
-  asyncHandler(genreController.getById)
+    "/:id", [
+        auth,
+        role([ROLES.SUPER_ADMIN, ROLES.CONTENT_MANAGER]), ...idValidation,
+    ],
+    asyncHandler(genreController.getById)
 );
 
 
 router.put(
-  "/:id",
-  [
-    auth,
-    role([ROLES.SUPER_ADMIN, ROLES.CONTENT_MANAGER]),
-    ...updateGenreValidation,
-    validate
-  ],
-  asyncHandler(genreController.update)
+    "/:id", [
+        auth,
+        role([ROLES.SUPER_ADMIN, ROLES.CONTENT_MANAGER]),
+        // ...updateGenreValidation,
+    ],
+    asyncHandler(genreController.update)
 );
 
 
 router.delete(
-  "/:id",
-  [
-    auth,
-    role([ROLES.SUPER_ADMIN, ROLES.CONTENT_MANAGER]),
-    ...idValidation,
-    validate
-  ],
-  asyncHandler(genreController.delete)
+    "/:id", [
+        auth,
+        role([ROLES.SUPER_ADMIN, ROLES.CONTENT_MANAGER]),
+        ...idValidation,
+    ],
+    asyncHandler(genreController.delete)
 );
 
 

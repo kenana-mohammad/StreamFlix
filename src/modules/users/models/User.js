@@ -1,6 +1,10 @@
 const mongoose = require('mongoose');
-const { ROLES } = require('../../../shared/constants/roles.constant');
-const { USER_STATUS } = require('../../../shared/constants/user-status.constant');
+const {
+    ROLES
+} = require('../../../shared/constants/roles.constant');
+const {
+    USER_STATUS
+} = require('../../../shared/constants/user-status.constant');
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -49,7 +53,8 @@ const userSchema = new mongoose.Schema({
 
     phone: {
         type: String,
-        trim: true
+        trim: true,
+default:null
     },
 
     lockUntil: {
