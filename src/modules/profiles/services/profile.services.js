@@ -51,10 +51,10 @@ class ProfileService {
     
       const profile = await Profile.findById(profileId)
               
-        profile.name = data.name || profile.name;
-        profile.avatar = data.avatar || profile.avatar;
-        profile.isKids = data.isKids || profile.isKids;
-        profile.minAge = data.minAge || profile.minAge;
+        profile.name = data.name ?? profile.name;
+        profile.avatar = data.avatar ?? profile.avatar;
+        profile.isKids = data.isKids ?? profile.isKids;
+        profile.minAge = data.minAge ?? profile.minAge;
              
        await profile.save();
   
