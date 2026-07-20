@@ -13,7 +13,7 @@ router.post(
     "/video",
     [
         auth,
-        role([ROLES.SUPER_ADMIN, ROLES.CONTENT_MANAGER]),
+        role([ROLES.SUPER_ADMIN, ROLES.CONTENT_MANAGER]),  
         upload.single("video"),
     ],
     asyncHandler(uploadController.uploadVideo)

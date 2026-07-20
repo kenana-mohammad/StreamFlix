@@ -1,4 +1,5 @@
 const uploadService = require("../services/upload.service");
+const { successResponse } = require("../../../shared/helpers/api-response.helper");
 
 class UploadController {
 
