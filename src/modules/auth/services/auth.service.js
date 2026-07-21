@@ -3,7 +3,9 @@ const {
 } = require("../../../shared/constants/user-status.constant");
 const jwtService = require("../../../utils/jwtService");
 const passwordService = require("../../../utils/passwordService");
+const Profile = require("../../profiles/models/Profile");
 const User = require("../../users/models/User");
+
 
 class AuthService {
     handleFailedLogin = async (user) => {
@@ -32,9 +34,15 @@ class AuthService {
             password: hashed
         });
 
+        const profile = await Profile.create({
+           userId : user.id,
+           name: data.name,
+           primaryProfile : true
+        })
+
         const userObj = user.toObject();
         delete userObj.password;
-        return userObj
+        return {userObj , profile}
     }
     async login(email, password) {
 

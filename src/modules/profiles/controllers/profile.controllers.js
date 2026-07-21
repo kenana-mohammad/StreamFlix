@@ -36,7 +36,7 @@ class ProfileController {
        const profileData = { name , avatar , isKids , minAge }
        const profile = await ProfileService.update(id ,profileData)
         return successResponse(res, 200,
-                "Profile updated successfully",
+                "Profile updated successfully",q
                 profile
               )
      }

@@ -31,9 +31,12 @@ class AuthController {
             phone,
             password
         }
-        const userObj = await authService.register(data)
+        const {userObj , profile} = await authService.register(data)
 
-        return successResponse(res, 201, "تم انشاء الحساب بنجاح", userObj);
+        return successResponse(res, 201, "تم انشاء الحساب بنجاح", {
+             user: userObj,
+             profile :profile
+    });
 
 
     }

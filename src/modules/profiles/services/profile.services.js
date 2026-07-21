@@ -67,21 +67,24 @@ class ProfileService {
     select = async (profileId, pin) => {
          const profile = await Profile.findById(profileId);
 
-        if (profile.pin){
-            const isVerified = await passwordService.compare(pin, profile.pin)
-            if (!isVerified) {
-            throw new AppError("PIN is not correct!", 404)
+        if (!profile.pin){
+           return profile
+
+        }
+        if(!pin) {
+          throw new AppError("PIN is required!" , 400)
+        }
+          const isVerified = await passwordService.compare(pin, profile.pin)
+          if (!isVerified) {
+          throw new AppError("PIN is not correct!", 404)
           }
-        else {
            const profileData = profile.toObject();
            delete profileData.pin;
            return profileData
         }
-      }
-      else {
-       return profile
-      }
-    }
+      
+ 
+    
 
     verifyPIN = async (profileId , pin) => {
         const profile = await Profile.findById(profileId);
@@ -97,8 +100,8 @@ class ProfileService {
        const profile = await Profile.findById(profileId);
        const  hashedPIN = await passwordService.hash(pin);
 
-       profile.pin= hashedPIN;
-       profile.save();
+       profile.pin = hashedPIN;
+       await profile.save();
   
 
     }
@@ -112,14 +115,18 @@ class ProfileService {
            }
 
           profile.pin = await passwordService.hash(newPin);
-          profile.save();
+          await profile.save();
          
         }
 
     
 
     delete = async (profileId) => {
-      
+        const profile = await Profile.findById(profileId);
+        if(profile.primaryProfile)
+        {
+          throw new AppError("The primary profile can't be deleted!" , 400)
+        }
         await Promise.all([
             Profile.deleteOne({ _id :profileId }),
             WatchHistory.deleteMany({ profileId }),
