@@ -90,12 +90,8 @@ class SubscriptionService {
 
                 const diffInTime = end.getTime() - today.getTime();
                 const diffInDays = Math.round(diffInTime / (1000 * 3600 * 24));
-
-                if (diffInDays > 3) {
-                    throw new Error(`لا يمكن التجديد الآن. اشتراكك فعال وباقي عليه ${diffInDays} أيام.`);
-                }
-
                 const startDateForNewPeriod = (diffInDays >= 0) ? new Date(existingSub.endDate) : new Date();
+
                 const newEndDate = new Date(startDateForNewPeriod);
                 newEndDate.setDate(newEndDate.getDate() + Number(subscriptionPlan.duration));
 
@@ -118,11 +114,9 @@ class SubscriptionService {
 
                 if (session) await session.commitTransaction();
 
-                // 5. جلب بيانات الدفع مع الـ Populate لتكون متكاملة
                 const populatedPayment = await Payment.findById(payment[0]._id)
                     .populate('userId', 'name email')
-                    .populate('subscriptionId')
-
+                    .populate('subscriptionId');
 
                 return {
                     subscription: {
