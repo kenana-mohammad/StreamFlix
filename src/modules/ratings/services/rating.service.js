@@ -1,4 +1,4 @@
-const Rating = require("../models/rating");
+const Rating = require("../models/Rating");
 const Content = require("../../content/models/Content");
 const AppError = require("../../../shared/errors/AppError");
 

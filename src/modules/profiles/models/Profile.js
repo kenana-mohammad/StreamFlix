@@ -26,6 +26,10 @@ const profileSchema = new Schema({
     minAge: {
         type: Number,
         default: 18
+    },
+    primaryProfile : {
+        type : Boolean,
+        default : false
     }
 }, {
     timestamps: true
