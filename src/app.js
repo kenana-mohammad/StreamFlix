@@ -13,6 +13,8 @@ const MONGOOSE_URL = process.env.MONGOOSE_URL;
 const notFound = require('./middlewares/notFound');
 const errorHandler = require('./middlewares/errorHandler');
 const schedulerService = require('./modules/content/services/scheduler.service');
+const { initSchedulers } = require('./scheduler/index');
+
 //use server support cookies
 const cookies = require('cookie-parser');
 const {
@@ -49,13 +51,17 @@ app.use('/api/v1/cast', require('./modules/casts/routes/cast.routes'));
 app.use("/api/v1/plans", require("./modules/plans/index"));
 //genres
 app.use("/api/v1/genres", require("./modules/genres/index"));
+//==============================================
+//section subscription routes
+app.use("/api/v1/subscriptions", require("./modules/subscriptions/routes/subscription.routes"));
+//==========================================
 //section dashboard routes
 app.use('/api/v1/admin/analytics', require('./modules/dashboard/routes/dashboard.routes'));
 app.use('/api/v1/admin/users', require('./modules/dashboard/routes/dashboard.users.route'));
 app.use('/api/v1/devices', require("./modules/devices/routes/device.routes"));
 app.use('/api/v1/dashboard', require('./modules/dashboard/routes/dashboard.routes'));
 app.use('/api/v1/dashboard/users', require('./modules/dashboard/routes/dashboard.users.route'));
-
+app.use('/api/v1/admin/subscriptions', require("./modules/subscriptions/routes/adminSubscription.routes"));
 app.use(notFound);
 app.use(errorHandler);
 
@@ -64,6 +70,7 @@ const mongoose = require('mongoose');
 mongoose.connect(MONGOOSE_URL).then(() => {
 
     schedulerService.init();
+    initSchedulers();
     console.log('Scheduler initialized successfully');
 
     app.listen(PORT, () => {
