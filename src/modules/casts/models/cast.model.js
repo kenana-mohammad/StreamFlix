@@ -24,4 +24,16 @@ const castSchema = new mongoose.Schema(
   }
 );
 
+// ==========================================
+// Cascade Delete Middleware
+// ==========================================
+castSchema.pre('findOneAndDelete', async function(next) {
+    const castId = this.getQuery()['_id'];
+    
+    if (castId) {
+        await mongoose.model('ContentCast').deleteMany({ castId: castId });
+    }
+    next();
+});
+
 module.exports = mongoose.model("Cast", castSchema);

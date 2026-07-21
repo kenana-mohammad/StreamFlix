@@ -7,6 +7,10 @@ const AppError = require('../../../shared/errors/AppError');
 const { CONTENT_TYPE } = require('../../../shared/constants/content-type.constant');
 const { CONTENT_STATUS } = require('../../../shared/constants/content-status.constant');
 
+// Relations Models
+const ContentGenre = require('../models/ContentGenre');
+const ContentCast = require('../models/ContentCast');
+
 const useTransaction = process.env.USE_TRANSACTIONS === 'true';
 
 class SeriesService {
@@ -39,6 +43,17 @@ class SeriesService {
             const series = await Series.create([{
                 contentId: content[0]._id
             }], { session });
+
+            // إضافة التصنيفات والممثلين إذا وجدوا
+            if (data.genres && data.genres.length > 0) {
+                const genreDocs = data.genres.map(genreId => ({ contentId: content[0]._id, genreId }));
+                await ContentGenre.insertMany(genreDocs, { session });
+            }
+
+            if (data.cast && data.cast.length > 0) {
+                const castDocs = data.cast.map(c => ({ contentId: content[0]._id, castId: c.castId, characterName: c.characterName }));
+                await ContentCast.insertMany(castDocs, { session });
+            }
 
             if (session) await session.commitTransaction();
             if (session) session.endSession();
@@ -148,20 +163,24 @@ class SeriesService {
         if (session) session.startTransaction();
 
         try {
-            await Episode.deleteMany({ seriesId: id }, { session });
+            // استخدام Promise.all
+            await Promise.all([
+                Episode.deleteMany({ seriesId: id }, { session }),
+                Season.deleteMany({ seriesId: id }, { session }),
+                Series.findByIdAndDelete(id, { session }),
+                Content.findByIdAndDelete(series.contentId, { session })
+            ]);
 
-            await Season.deleteMany({ seriesId: id }, { session });
-
-            await Content.findByIdAndDelete(series.contentId, { session });
-
-            await Series.findByIdAndDelete(id, { session });
-
-            if (session) await session.commitTransaction();
-            if (session) session.endSession();
+            if (session) {
+                await session.commitTransaction();
+                session.endSession();
+            }
             return true;
         } catch (error) {
-            if (session) await session.abortTransaction();
-            if (session) session.endSession();
+            if (session) {
+                await session.abortTransaction();
+                session.endSession();
+            }
             throw error;
         }
     }

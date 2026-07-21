@@ -10,9 +10,15 @@ const baseContentValidator = [
     body('trailerUrl').optional().isString(),
     body('releaseYear').isInt({ min: 1900 }).withMessage('Invalid release year'),
     body('status').optional().isIn(Object.values(CONTENT_STATUS)).withMessage('Invalid content status'),
-    body('publishAt').optional().isISO8601().toDate().withMessage('Invalid publish date format')
+    body('publishAt').optional().isISO8601().toDate().withMessage('Invalid publish date format'),
+    
+    // Relations 
+    body('genres').optional().isArray().withMessage('Genres must be an array of IDs'),
+    body('genres.*').optional().isMongoId().withMessage('Invalid Genre ID'),
+    body('cast').optional().isArray().withMessage('Cast must be an array of objects'),
+    body('cast.*.castId').optional().isMongoId().withMessage('Invalid Cast ID'),
+    body('cast.*.characterName').optional().trim().notEmpty().withMessage('Character name is required')
 ];
-
 const updateContentValidator = [
     body('title').optional().trim().notEmpty().withMessage('Title cannot be empty'),
     body('description').optional().notEmpty().withMessage('Description cannot be empty'),
@@ -20,9 +26,15 @@ const updateContentValidator = [
     body('ageRating').optional().isIn(Object.values(AGE_RATING)).withMessage('Invalid age rating'),
     body('trailerUrl').optional().isString(),
     body('releaseYear').optional().isInt({ min: 1900 }).withMessage('Invalid release year'),
-    body('publishAt').optional().isISO8601().toDate().withMessage('Invalid publish date format')
+    body('publishAt').optional().isISO8601().toDate().withMessage('Invalid publish date format'),
+    
+    // Relations 
+    body('genres').optional().isArray().withMessage('Genres must be an array of IDs'),
+    body('genres.*').optional().isMongoId().withMessage('Invalid Genre ID'),
+    body('cast').optional().isArray().withMessage('Cast must be an array of objects'),
+    body('cast.*.castId').optional().isMongoId().withMessage('Invalid Cast ID'),
+    body('cast.*.characterName').optional().trim().notEmpty().withMessage('Character name is required')
 ];
-
 const changeStatusValidator = [
     body('status').notEmpty().isIn(Object.values(CONTENT_STATUS)).withMessage('Content status is required and must be valid')
 ];
