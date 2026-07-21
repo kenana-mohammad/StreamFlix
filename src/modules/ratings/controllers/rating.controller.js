@@ -24,44 +24,8 @@ class RatingController {
         return successResponse(
             res,
             201,
-            "Rating created successfully",
+            "Rating saved successfully",
             ratingObj
-        );
-    };
-
-    update = async (req, res) => {
-
-        const {
-            rating,
-            review
-        } = req.body;
-
-        const ratingData = {
-            rating,
-            review
-        };
-
-        const ratingObj = await ratingService.update(
-            req.params.contentId,
-            ratingData
-        );
-
-        return successResponse(
-            res,
-            200,
-            "Rating updated successfully",
-            ratingObj
-        );
-    };
-
-    remove = async (req, res) => {
-
-        await ratingService.remove(req.params.contentId);
-
-        return successResponse(
-            res,
-            200,
-            "Rating deleted successfully"
         );
     };
 
@@ -81,15 +45,15 @@ class RatingController {
     // Front APIs
     getContentRating = async (req, res) => {
 
-        const rating = await ratingService.getContentRating(
+        const ratings = await ratingService.getContentRating(
             req.params.contentId
         );
 
         return successResponse(
             res,
             200,
-            "Content rating fetched successfully",
-            rating
+            "Content ratings fetched successfully",
+            ratings
         );
     };
 

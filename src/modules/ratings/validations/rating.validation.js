@@ -31,24 +31,6 @@ const createRatingValidation = [
     validate
 ];
 
-const updateRatingValidation = [
-
-    body("rating")
-        .optional()
-        .isInt({ min: 1, max: 5 })
-        .withMessage("Rating must be between 1 and 5"),
-
-    body("review")
-        .optional()
-        .isString()
-        .withMessage("Review must be a string")
-        .isLength({ max: 1000 })
-        .withMessage("Review must not exceed 1000 characters"),
-
-    validate
-];
-
 module.exports = {
-    createRatingValidation,
-    updateRatingValidation
+    createRatingValidation
 };
