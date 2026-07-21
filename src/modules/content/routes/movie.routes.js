@@ -33,5 +33,5 @@ router.delete('/admin/:id',
 router.get('/client', asyncHandler(movieController.getAllForClient));
 router.get('/client/:id', movieIdValidator, validate, asyncHandler(movieController.getByIdForClient));
 
-module.exports = router;
+
 module.exports = router;

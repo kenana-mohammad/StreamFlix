@@ -18,7 +18,7 @@ const authService = require("../services/auth.service");
 
 class AuthController {
 
-    register = async (req, res) => {
+    register = async(req, res) => {
         const {
             name,
             email,
@@ -39,9 +39,10 @@ class AuthController {
     });
 
 
+
     }
 
-    login = async (req, res) => {
+    login = async(req, res) => {
 
         const {
             email,
@@ -83,29 +84,29 @@ class AuthController {
 
     }
 
-    logout = async (req, res) => {
+    logout = async(req, res) => {
         cookiesService.clearTokens(res);
         return res.status(200).json({
             msg: "تم تسجيل الخروج بنجاح"
         });
     }
 
-    refreshToken = async (req, res) => {
-        const oldRefreshToken = cookiesService.getRefreshToken(req);
+    refreshToken = async(req, res) => {
+            const oldRefreshToken = cookiesService.getRefreshToken(req);
 
-        const {
-            accessToken,
-            newRefreshToken
-        } = await authService.refreshAuthTokens(oldRefreshToken);
+            const {
+                accessToken,
+                newRefreshToken
+            } = await authService.refreshAuthTokens(oldRefreshToken);
 
-        cookiesService.setAccessToken(res, accessToken);
-        cookiesService.setRefreshToken(res, newRefreshToken);
+            cookiesService.setAccessToken(res, accessToken);
+            cookiesService.setRefreshToken(res, newRefreshToken);
 
-        return successResponse(res, 200, "تم تجديد التوكين بنجاح");
+            return successResponse(res, 200, "تم تجديد التوكين بنجاح");
 
-    }
-    //change my password 
-    changeMyPassword = async (req, res) => {
+        }
+        //change my password 
+    changeMyPassword = async(req, res) => {
         const {
             oldPassword,
             newPassword
