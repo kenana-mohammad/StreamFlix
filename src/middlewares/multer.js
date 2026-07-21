@@ -2,6 +2,9 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
+const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp"];
+const VIDEO_EXTENSIONS = [".mp4", ".mov", ".avi", ".mkv", ".webm"];
+
 // Ensure upload directory exists
 const uploadDir = path.join(__dirname, "../uploads");
 
@@ -48,26 +51,61 @@ const storage = multer.diskStorage({
     },
 });
 
-const fileFilter = (req, file, cb) => {
+const imageFileFilter = (req, file, cb) => {
+    const extension = path.extname(file.originalname).toLowerCase();
+
     if (
-        file.mimetype.startsWith("image/") ||
-        file.mimetype.startsWith("video/")
+        file.mimetype.startsWith("image/") &&
+        IMAGE_EXTENSIONS.includes(extension)
     ) {
         return cb(null, true);
     }
 
-    cb(new Error("Only image and video files are allowed"), false);
+    cb(
+        new Error(
+            "Only JPG, JPEG, PNG and WEBP image files are allowed"
+        ),
+        false
+    );
 };
 
-const uploadLocal = multer({
+const videoFileFilter = (req, file, cb) => {
+    const extension = path.extname(file.originalname).toLowerCase();
+
+    if (
+        file.mimetype.startsWith("video/") &&
+        VIDEO_EXTENSIONS.includes(extension)
+    ) {
+        return cb(null, true);
+    }
+
+    cb(
+        new Error(
+            "Only MP4, MOV, AVI, MKV and WEBM video files are allowed"
+        ),
+        false
+    );
+};
+
+const imageUpload = multer({
     storage,
-    fileFilter,
+    fileFilter: imageFileFilter,
     limits: {
         files: 5,
-
-        // Increased to support video uploads (500 MB)
-        fileSize: 500 * 1024 * 1024,
+        fileSize: 200 * 1024 * 1024,// 200MB
     },
 });
 
-module.exports = uploadLocal;
+const videoUpload = multer({
+    storage,
+    fileFilter: videoFileFilter,
+    limits: {
+        files: 5,
+        fileSize: 2000 * 1024 * 1024,// 2GB
+    },
+});
+
+module.exports = {
+    imageUpload,
+    videoUpload,
+};
