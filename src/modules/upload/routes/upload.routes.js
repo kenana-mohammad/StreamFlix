@@ -29,4 +29,13 @@ router.post(
     asyncHandler(uploadController.uploadPoster)
 );
 
+router.delete(
+    "/",
+    [
+        auth,
+        role([ROLES.SUPER_ADMIN, ROLES.CONTENT_MANAGER]),
+    ],
+    asyncHandler(uploadController.deleteFile)
+);
+
 module.exports = router;

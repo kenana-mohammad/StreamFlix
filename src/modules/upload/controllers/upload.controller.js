@@ -27,6 +27,20 @@ class UploadController {
         );
     };
 
+    deleteFile = async (req, res) => {
+
+        const { public_id, resource_type } = req.body;
+
+        const data = await uploadService.deleteFile(public_id, resource_type);
+
+        return successResponse(
+            res,
+            200,
+            "File deleted successfully",
+            data
+        );
+    };
+
 }
 
 module.exports = new UploadController();
