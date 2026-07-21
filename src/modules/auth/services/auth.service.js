@@ -5,44 +5,68 @@ const jwtService = require("../../../utils/jwtService");
 const passwordService = require("../../../utils/passwordService");
 const Profile = require("../../profiles/models/Profile");
 const User = require("../../users/models/User");
+const useTransaction = process.env.USE_TRANSACTIONS === 'true';
 
 
 class AuthService {
-    handleFailedLogin = async (user) => {
-        user.failedLoginAttempts = +(user.failedLoginAttempts || 0) + 1
-        if (user.failedLoginAttempts >= 5) {
-            user.status = USER_STATUS.BANNED;
-            user.lockUntil = new Date(Date.now() + (30 * 60 * 1000))
+    handleFailedLogin = async(user) => {
+            user.failedLoginAttempts = +(user.failedLoginAttempts || 0) + 1
+            if (user.failedLoginAttempts >= 5) {
+                user.status = USER_STATUS.BANNED;
+                user.lockUntil = new Date(Date.now() + (30 * 60 * 1000))
+            }
+            await user.save();
         }
-        await user.save();
-    }
-    //============
-    //reset 
-    resetFailedLoginAttempt = async (user) => {
+        //============
+        //reset 
+    resetFailedLoginAttempt = async(user) => {
         user.status = USER_STATUS.ACTIVE;
         user.lockUntil = null;
         user.failedLoginAttempts = 0;
         await user.save();
     }
     async register(data) {
-        const hashed = await passwordService.hash(data.password);
 
-        let user = await User.create({
-            name: data.name,
-            email: data.email,
-            phone: data.phone,
-            password: hashed
-        });
+        const session = useTransaction ? await mongoose.startSession() : null;
+        if (session) session.startTransaction();
+        try {
+            const hashed = await passwordService.hash(data.password);
 
-        const profile = await Profile.create({
-           userId : user.id,
-           name: data.name,
-           primaryProfile : true
-        })
+            let user = await User.create([{
+                name: data.name,
+                email: data.email,
+                phone: data.phone,
+                password: hashed
+            }], { session });
 
-        const userObj = user.toObject();
-        delete userObj.password;
-        return {userObj , profile}
+            const newUser = user[0];
+
+            const profile = await Profile.create([{
+                userId: newUser._id,
+                name: newUser.name,
+                primaryProfile: true,
+                avatar: data.avatar || "default-avatar.png",
+                pin: null
+            }], { session });
+
+            const newProfile = profile[0];
+
+            if (session) await session.commitTransaction();
+            if (session) session.endSession();
+
+            const userObj = newUser.toObject();
+            delete userObj.password;
+
+            const profileObj = newProfile.toObject();
+            delete profileObj.pin;
+
+            return { user: userObj, profile: profileObj };
+
+        } catch (error) {
+            if (session) await session.abortTransaction();
+            if (session) session.endSession();
+            throw error;
+        }
     }
     async login(email, password) {
 
@@ -89,29 +113,29 @@ class AuthService {
 
     }
     async refreshAuthTokens(refreshToken) {
-        if (!refreshToken) throw {
-            statusCode: 401,
-            message: "يجب تسجيل الدخول"
-        };
+            if (!refreshToken) throw {
+                statusCode: 401,
+                message: "يجب تسجيل الدخول"
+            };
 
-        const decoded = jwtService.verifyRefreshToken(refreshToken);
-        const data = {
-            id: decoded.id,
-            email: decoded.email,
-            role: decoded.role,
-            deviceId: decoded.deviceId
+            const decoded = jwtService.verifyRefreshToken(refreshToken);
+            const data = {
+                id: decoded.id,
+                email: decoded.email,
+                role: decoded.role,
+                deviceId: decoded.deviceId
 
-        };
+            };
 
-        const accessToken = jwtService.genrateAccessToken(data);
-        const newRefreshToken = jwtService.genrateRefreshToken(data);
+            const accessToken = jwtService.genrateAccessToken(data);
+            const newRefreshToken = jwtService.genrateRefreshToken(data);
 
-        return {
-            accessToken,
-            newRefreshToken
-        };
-    }
-    //==============
+            return {
+                accessToken,
+                newRefreshToken
+            };
+        }
+        //==============
     async changePassword(userId, oldPassword, newPassword) {
         const user = await User.findById(userId).select("+password");
         if (!user) throw {
