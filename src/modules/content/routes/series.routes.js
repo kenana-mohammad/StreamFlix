@@ -25,4 +25,3 @@ router.get('/client', asyncHandler(seriesController.getAllForClient));
 router.get('/client/:id', seriesIdValidator, validate, asyncHandler(seriesController.getByIdForClient));
 
 module.exports = router;
-module.exports = router;
