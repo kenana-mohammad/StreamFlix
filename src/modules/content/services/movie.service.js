@@ -88,89 +88,87 @@ class MovieService {
         }
     }
     async getMovies(isAdmin = false) {
-    const matchCondition = isAdmin
-        ? {}
-        : { status: CONTENT_STATUS.PUBLISHED };
+        const matchCondition = isAdmin ? {} : { status: CONTENT_STATUS.PUBLISHED };
 
-    const movies = await Movie.find().populate({
-        path: 'contentId',
-        match: matchCondition
-    });
+        const movies = await Movie.find().populate({
+            path: 'contentId',
+            match: matchCondition
+        });
 
-    const filteredMovies = movies.filter(
-        movie => movie.contentId !== null
-    );
+        const filteredMovies = movies.filter(
+            movie => movie.contentId !== null
+        );
 
-    const moviesWithDetails = await Promise.all(
-        filteredMovies.map(async (movie) => {
-            const contentId = movie.contentId._id;
+        const moviesWithDetails = await Promise.all(
+            filteredMovies.map(async(movie) => {
+                const contentId = movie.contentId._id;
 
-            // Get genres
-            const genreLinks = await ContentGenre.find({ contentId })
-                .populate('genreId');
+                // Get genres
+                const genreLinks = await ContentGenre.find({ contentId })
+                    .populate('genreId');
 
-            const genres = genreLinks.map(
-                link => link.genreId
-            );
+                const genres = genreLinks.map(
+                    link => link.genreId
+                );
 
-            // Get cast
-            const castLinks = await ContentCast.find({ contentId })
-                .populate('castId');
+                // Get cast
+                const castLinks = await ContentCast.find({ contentId })
+                    .populate('castId');
 
-            const casts = castLinks.map(link => ({
-                _id: link._id,
-                actor: link.castId,
-                characterName: link.characterName
-            }));
+                const casts = castLinks.map(link => ({
+                    _id: link._id,
+                    actor: link.castId,
+                    characterName: link.characterName
+                }));
 
-            return {
-                ...movie.toObject(),
-                genres,
-                casts
-            };
-        })
-    );
+                return {
+                    ...movie.toObject(),
+                    genres,
+                    casts
+                };
+            })
+        );
 
-    return moviesWithDetails;
-}
-
-async getMovieById(id, isAdmin = false) {
-    const movie = await Movie.findById(id).populate('contentId');
-
-    if (!movie || !movie.contentId) {
-        throw new AppError('Movie not found', 404);
+        return moviesWithDetails;
     }
 
-    // التحقق من حالة النشر إذا لم يكن المشاهد Admin
-    if (!isAdmin && movie.contentId.status !== CONTENT_STATUS.PUBLISHED) {
-        throw new AppError('Movie not found', 404);
+    async getMovieById(id, isAdmin = false) {
+        const movie = await Movie.findById(id).populate('contentId');
+
+        if (!movie || !movie.contentId) {
+            throw new AppError('Movie not found', 404);
+        }
+
+        // التحقق من حالة النشر إذا لم يكن المشاهد Admin
+        if (!isAdmin && movie.contentId.status !== CONTENT_STATUS.PUBLISHED) {
+            throw new AppError('Movie not found', 404);
+        }
+
+        const contentId = movie.contentId._id;
+
+        // جلب التصنيفات المرتبطة
+        const genreLinks = await ContentGenre.find({ contentId })
+            .populate('genreId');
+
+        const genres = genreLinks.map(link => link.genreId);
+
+        // جلب الممثلين المرتبطين
+        const castLinks = await ContentCast.find({ contentId })
+            .populate('castId');
+
+        const casts = castLinks.map(link => ({
+            _id: link._id,
+            actor: link.castId,
+            characterName: link.characterName
+        }));
+
+        return {
+            ...movie.toObject(),
+            genres,
+            casts
+        };
     }
-
-    const contentId = movie.contentId._id;
-
-    // جلب التصنيفات المرتبطة
-    const genreLinks = await ContentGenre.find({ contentId })
-        .populate('genreId');
-
-    const genres = genreLinks.map(link => link.genreId);
-
-    // جلب الممثلين المرتبطين
-    const castLinks = await ContentCast.find({ contentId })
-        .populate('castId');
-
-    const casts = castLinks.map(link => ({
-        _id: link._id,
-        actor: link.castId,
-        characterName: link.characterName
-    }));
-
-    return {
-        ...movie.toObject(),
-        genres,
-        casts
-    };
-}
-async updateMovie(id, data) {
+    async updateMovie(id, data) {
         const movie = await Movie.findById(id);
         if (!movie) throw new AppError('Movie not found', 404);
 
@@ -208,21 +206,23 @@ async updateMovie(id, data) {
                 await Movie.findByIdAndUpdate(id, movieData, { new: true, runValidators: true, session });
             }
 
-            // تحديث الأصناف (Genres): حذف القديم وإدخال الجديد
-            if (data.genres !== undefined) {
+            // تحديث الأصناف (Genres): دعم كلا الاحتمالين وعدم الحذف إلا إذا تم إرسال المفتاح صراحة
+            const genresInput = data.genres !== undefined ? data.genres : data.genre;
+            if (genresInput !== undefined) {
                 await ContentGenre.deleteMany({ contentId }, { session });
-                if (Array.isArray(data.genres) && data.genres.length > 0) {
-                    const genreDocs = data.genres.map(genreId => ({ contentId, genreId }));
+                if (Array.isArray(genresInput) && genresInput.length > 0) {
+                    const genreDocs = genresInput.map(genreId => ({ contentId, genreId }));
                     await ContentGenre.insertMany(genreDocs, { session });
                 }
             }
 
-            // تحديث الممثلين (Cast): حذف القديم وإدخال الجديد
-            if (data.casts !== undefined) {
-                console.log("Updating Cast with data:", data.casts);
+            // تحديث الممثلين (Cast / Casts): دعم كلا الاحتمالين وعدم الحذف إلا إذا تم إرسال المفتاح صراحة
+            const castInput = data.casts !== undefined ? data.casts : data.cast;
+            if (castInput !== undefined) {
+                console.log("Updating Cast with data:", castInput);
                 await ContentCast.deleteMany({ contentId }, { session });
-                if (Array.isArray(data.casts) && data.casts.length > 0) {
-                    const castDocs = data.casts.map(c => ({
+                if (Array.isArray(castInput) && castInput.length > 0) {
+                    const castDocs = castInput.map(c => ({
                         contentId,
                         castId: c.castId,
                         characterName: c.characterName
@@ -261,11 +261,11 @@ async updateMovie(id, data) {
         try {
             // إضافة Promise.all 
             await Promise.all([
-    Movie.findByIdAndDelete(id, { session }),
-    Content.findByIdAndDelete(movie.contentId, { session }),
-    ContentGenre.deleteMany({ contentId: movie.contentId }, { session }),
-    ContentCast.deleteMany({ contentId: movie.contentId }, { session })
-]);
+                Movie.findByIdAndDelete(id, { session }),
+                Content.findByIdAndDelete(movie.contentId, { session }),
+                ContentGenre.deleteMany({ contentId: movie.contentId }, { session }),
+                ContentCast.deleteMany({ contentId: movie.contentId }, { session })
+            ]);
 
             if (session) {
                 await session.commitTransaction();
