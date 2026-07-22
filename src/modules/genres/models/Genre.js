@@ -19,7 +19,7 @@ const genreSchema = new Schema({
 // ==========================================
 // Cascade Delete Middleware
 // ==========================================
-genreSchema.pre('findOneAndDelete', async function(next) {
+genreSchema.pre('findOneAndDelete', async function() {
     const genreId = this.getQuery()['_id'];
     
     if (genreId) {

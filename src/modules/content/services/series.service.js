@@ -15,7 +15,6 @@ const useTransaction = process.env.USE_TRANSACTIONS === 'true';
 
 class SeriesService {
     async createSeries(data) {
-
         const session = useTransaction ? await mongoose.startSession() : null;
         if (session) session.startTransaction();
 
@@ -28,6 +27,7 @@ class SeriesService {
             } else {
                 status = CONTENT_STATUS.PUBLISHED;
             }
+
             const content = await Content.create([{
                 title: data.title,
                 description: data.description,
@@ -36,29 +36,49 @@ class SeriesService {
                 ageRating: data.ageRating,
                 trailerUrl: data.trailerUrl,
                 releaseYear: data.releaseYear,
-                status: status,
+                status: data.status || status,
                 publishAt: data.publishAt
             }], { session });
 
             const series = await Series.create([{
-                contentId: content[0]._id
-            }], { session });
+    contentId: content[0]._id,
+    totalSeasons: 0
+}], { session });
 
-            // إضافة التصنيفات والممثلين إذا وجدوا
+            let savedGenres = [];
+            let savedCasts = [];
+
+            // إضافة التصنيفات إذا تم تمريرها
             if (data.genres && data.genres.length > 0) {
                 const genreDocs = data.genres.map(genreId => ({ contentId: content[0]._id, genreId }));
                 await ContentGenre.insertMany(genreDocs, { session });
+                savedGenres = await ContentGenre.find({ contentId: content[0]._id }).populate('genreId').session(session);
+                savedGenres = savedGenres.map(g => g.genreId);
             }
 
-            if (data.cast && data.cast.length > 0) {
-                const castDocs = data.cast.map(c => ({ contentId: content[0]._id, castId: c.castId, characterName: c.characterName }));
+            // إضافة الممثلين إذا تم تمريرهم
+            if (data.casts && data.casts.length > 0) {
+                const castDocs = data.casts.map(c => ({ contentId: content[0]._id, castId: c.castId, characterName: c.characterName }));
                 await ContentCast.insertMany(castDocs, { session });
+                savedCasts = await ContentCast.find({ contentId: content[0]._id }).populate('castId').session(session);
+                savedCasts = savedCasts.map(c => ({
+                    _id: c._id,
+                    actor: c.castId,
+                    characterName: c.characterName
+                }));
             }
 
             if (session) await session.commitTransaction();
             if (session) session.endSession();
 
-            return { series: series[0], content: content[0] };
+            return {
+                series: {
+                    ...series[0].toObject(),
+                    contentId: content[0]
+                },
+                genres: savedGenres,
+                casts: savedCasts
+            };
         } catch (error) {
             if (session) await session.abortTransaction();
             if (session) session.endSession();
@@ -80,7 +100,38 @@ class SeriesService {
                     match: matchCondition,
                 }
             });
-        return series.filter(s => s.contentId !== null);
+
+        const filteredSeries = series.filter(
+            series => series.contentId !== null
+        );
+
+        const seriesWithDetails = await Promise.all(
+            filteredSeries.map(async (series) => {
+                const contentId = series.contentId._id;
+
+                // Get genres
+                const genreLinks = await ContentGenre.find({ contentId })
+                    .populate('genreId');
+                const genres = genreLinks.map(link => link.genreId);
+
+                // Get cast
+                const castLinks = await ContentCast.find({ contentId })
+                    .populate('castId');
+                const casts = castLinks.map(link => ({
+                    _id: link._id,
+                    actor: link.castId,
+                    characterName: link.characterName
+                }));
+
+                return {
+                    ...series.toObject(),
+                    genres,
+                    casts
+                };
+            })
+        );
+
+        return seriesWithDetails;
     }
 
     async getSeriesById(id, isAdmin = false) {
@@ -102,27 +153,55 @@ class SeriesService {
         if (!series || !series.contentId) {
             throw new AppError('Series not found or not available', 404);
         }
-        return series;
+
+        // التحقق من حالة النشر إذا لم يكن المشاهد Admin
+        if (!isAdmin && series.contentId.status !== CONTENT_STATUS.PUBLISHED) {
+            throw new AppError('Series not found or not available', 404);
+        }
+
+        const contentId = series.contentId._id;
+
+        // جلب التصنيفات المرتبطة
+        const genreLinks = await ContentGenre.find({ contentId })
+            .populate('genreId');
+        const genres = genreLinks.map(link => link.genreId);
+
+        // جلب الممثلين المرتبطين
+        const castLinks = await ContentCast.find({ contentId })
+            .populate('castId');
+        const casts = castLinks.map(link => ({
+            _id: link._id,
+            actor: link.castId,
+            characterName: link.characterName
+        }));
+
+        return {
+            ...series.toObject(),
+            genres,
+            casts
+        };
     }
 
     async updateSeries(id, data) {
         const series = await Series.findById(id);
         if (!series) throw new AppError('Series not found', 404);
 
+        const contentId = series.contentId;
+
         if (data.publishAt !== undefined) {
             const now = new Date();
             const publishDate = new Date(data.publishAt);
-
-
             data.status = (publishDate <= now) ? CONTENT_STATUS.PUBLISHED : CONTENT_STATUS.DRAFT;
         }
+
         const contentFields = ['title', 'description', 'poster', 'ageRating', 'trailerUrl', 'releaseYear', 'status', 'publishAt'];
+
         const contentData = {};
-        const seriesData = {};
 
         for (const key in data) {
-            if (contentFields.includes(key)) contentData[key] = data[key];
-            else seriesData[key] = data[key];
+            if (contentFields.includes(key)) {
+                contentData[key] = data[key];
+            } 
         }
 
         const session = useTransaction ? await mongoose.startSession() : null;
@@ -130,14 +209,34 @@ class SeriesService {
 
         try {
             if (Object.keys(contentData).length > 0) {
-                await Content.findByIdAndUpdate(series.contentId, contentData, { new: true, runValidators: true, session });
+                await Content.findByIdAndUpdate(contentId, contentData, { new: true, runValidators: true, session });
             }
-            if (Object.keys(seriesData).length > 0) {
-                await Series.findByIdAndUpdate(id, seriesData, { new: true, runValidators: true, session });
+
+            // تحديث الأصناف (Genres): حذف القديم وإدخال الجديد
+            if (data.genres !== undefined) {
+                await ContentGenre.deleteMany({ contentId }, { session });
+                if (Array.isArray(data.genres) && data.genres.length > 0) {
+                    const genreDocs = data.genres.map(genreId => ({ contentId, genreId }));
+                    await ContentGenre.insertMany(genreDocs, { session });
+                }
+            }
+
+            // تحديث الممثلين (Cast): حذف القديم وإدخال الجديد
+            if (data.casts !== undefined) {
+                await ContentCast.deleteMany({ contentId }, { session });
+                if (Array.isArray(data.casts) && data.casts.length > 0) {
+                    const castDocs = data.casts.map(c => ({
+                        contentId,
+                        castId: c.castId,
+                        characterName: c.characterName
+                    }));
+                    await ContentCast.insertMany(castDocs, { session });
+                }
             }
 
             if (session) await session.commitTransaction();
             if (session) session.endSession();
+
         } catch (error) {
             if (session) await session.abortTransaction();
             if (session) session.endSession();
@@ -163,12 +262,13 @@ class SeriesService {
         if (session) session.startTransaction();
 
         try {
-            // استخدام Promise.all
             await Promise.all([
                 Episode.deleteMany({ seriesId: id }, { session }),
                 Season.deleteMany({ seriesId: id }, { session }),
                 Series.findByIdAndDelete(id, { session }),
-                Content.findByIdAndDelete(series.contentId, { session })
+                Content.findByIdAndDelete(series.contentId, { session }),
+                ContentGenre.deleteMany({ contentId: series.contentId }, { session }),
+                ContentCast.deleteMany({ contentId: series.contentId }, { session })
             ]);
 
             if (session) {

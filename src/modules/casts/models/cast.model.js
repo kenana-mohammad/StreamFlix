@@ -27,7 +27,7 @@ const castSchema = new mongoose.Schema(
 // ==========================================
 // Cascade Delete Middleware
 // ==========================================
-castSchema.pre('findOneAndDelete', async function(next) {
+castSchema.pre('findOneAndDelete', async function() {
     const castId = this.getQuery()['_id'];
     
     if (castId) {

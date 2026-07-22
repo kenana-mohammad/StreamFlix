@@ -12,34 +12,6 @@ const ContentCast = require('../models/ContentCast');
 const useTransaction = process.env.USE_TRANSACTIONS === 'true';
 
 class MovieService {
-    async getMovieById(id, isAdmin = false) {
-        const movie = await Movie.findById(id).populate('contentId');
-        if (!movie) throw new AppError('Movie not found', 404);
-
-        // التحقق من حالة النشر إذا لم يكن المشاهد Admin
-        if (!isAdmin && movie.contentId.status !== CONTENT_STATUS.PUBLISHED) {
-            throw new AppError('Movie not found', 404);
-        }
-
-        const contentId = movie.contentId._id;
-
-        // جلب التصنيفات والممثلين المرتبطين
-        const genreLinks = await ContentGenre.find({ contentId }).populate('genreId');
-        const genres = genreLinks.map(link => link.genreId);
-
-        const castLinks = await ContentCast.find({ contentId }).populate('castId');
-        const cast = castLinks.map(link => ({
-            _id: link._id,
-            actor: link.castId,
-            characterName: link.characterName
-        }));
-
-        return {
-            ...movie.toObject(),
-            genres,
-            cast
-        };
-    }
     async createMovie(data) {
         const session = useTransaction ? await mongoose.startSession() : null;
         if (session) session.startTransaction();
@@ -73,7 +45,7 @@ class MovieService {
 
             // مصفوفات لتخزين الوثائق المضافة لربطها في الاستجابة المباشرة
             let savedGenres = [];
-            let savedCast = [];
+            let savedCasts = [];
 
             // إضافة التصنيفات إذا تم تمريرها
             if (data.genres && data.genres.length > 0) {
@@ -85,12 +57,12 @@ class MovieService {
             }
 
             // إضافة الممثلين إذا تم تمريرهم
-            if (data.cast && data.cast.length > 0) {
-                const castDocs = data.cast.map(c => ({ contentId: content[0]._id, castId: c.castId, characterName: c.characterName }));
+            if (data.casts && data.casts.length > 0) {
+                const castDocs = data.casts.map(c => ({ contentId: content[0]._id, castId: c.castId, characterName: c.characterName }));
                 await ContentCast.insertMany(castDocs, { session });
                 // جلب الممثلين مع بياناتهم الأصلية لإرجاعهم
-                savedCast = await ContentCast.find({ contentId: content[0]._id }).populate('castId').session(session);
-                savedCast = savedCast.map(c => ({
+                savedCasts = await ContentCast.find({ contentId: content[0]._id }).populate('castId').session(session);
+                savedCasts = savedCasts.map(c => ({
                     _id: c._id,
                     actor: c.castId,
                     characterName: c.characterName
@@ -107,7 +79,7 @@ class MovieService {
                     contentId: content[0]
                 },
                 genres: savedGenres,
-                cast: savedCast
+                casts: savedCasts
             };
         } catch (error) {
             if (session) await session.abortTransaction();
@@ -115,7 +87,90 @@ class MovieService {
             throw error;
         }
     }
-    async updateMovie(id, data) {
+    async getMovies(isAdmin = false) {
+    const matchCondition = isAdmin
+        ? {}
+        : { status: CONTENT_STATUS.PUBLISHED };
+
+    const movies = await Movie.find().populate({
+        path: 'contentId',
+        match: matchCondition
+    });
+
+    const filteredMovies = movies.filter(
+        movie => movie.contentId !== null
+    );
+
+    const moviesWithDetails = await Promise.all(
+        filteredMovies.map(async (movie) => {
+            const contentId = movie.contentId._id;
+
+            // Get genres
+            const genreLinks = await ContentGenre.find({ contentId })
+                .populate('genreId');
+
+            const genres = genreLinks.map(
+                link => link.genreId
+            );
+
+            // Get cast
+            const castLinks = await ContentCast.find({ contentId })
+                .populate('castId');
+
+            const casts = castLinks.map(link => ({
+                _id: link._id,
+                actor: link.castId,
+                characterName: link.characterName
+            }));
+
+            return {
+                ...movie.toObject(),
+                genres,
+                casts
+            };
+        })
+    );
+
+    return moviesWithDetails;
+}
+
+async getMovieById(id, isAdmin = false) {
+    const movie = await Movie.findById(id).populate('contentId');
+
+    if (!movie || !movie.contentId) {
+        throw new AppError('Movie not found', 404);
+    }
+
+    // التحقق من حالة النشر إذا لم يكن المشاهد Admin
+    if (!isAdmin && movie.contentId.status !== CONTENT_STATUS.PUBLISHED) {
+        throw new AppError('Movie not found', 404);
+    }
+
+    const contentId = movie.contentId._id;
+
+    // جلب التصنيفات المرتبطة
+    const genreLinks = await ContentGenre.find({ contentId })
+        .populate('genreId');
+
+    const genres = genreLinks.map(link => link.genreId);
+
+    // جلب الممثلين المرتبطين
+    const castLinks = await ContentCast.find({ contentId })
+        .populate('castId');
+
+    const casts = castLinks.map(link => ({
+        _id: link._id,
+        actor: link.castId,
+        characterName: link.characterName
+    }));
+
+    return {
+        ...movie.toObject(),
+        genres,
+        casts
+    };
+}
+async updateMovie(id, data) {
         const movie = await Movie.findById(id);
         if (!movie) throw new AppError('Movie not found', 404);
 
@@ -163,11 +218,11 @@ class MovieService {
             }
 
             // تحديث الممثلين (Cast): حذف القديم وإدخال الجديد
-            if (data.cast !== undefined) {
-                console.log("Updating Cast with data:", data.cast);
+            if (data.casts !== undefined) {
+                console.log("Updating Cast with data:", data.casts);
                 await ContentCast.deleteMany({ contentId }, { session });
-                if (Array.isArray(data.cast) && data.cast.length > 0) {
-                    const castDocs = data.cast.map(c => ({
+                if (Array.isArray(data.casts) && data.casts.length > 0) {
+                    const castDocs = data.casts.map(c => ({
                         contentId,
                         castId: c.castId,
                         characterName: c.characterName
@@ -193,8 +248,7 @@ class MovieService {
         if (!movie) throw new AppError('Movie not found', 404);
 
         await Content.findByIdAndUpdate(movie.contentId, { status }, { runValidators: true });
-        return await this.getMovieBy
-        Id(id, true);
+        return await this.getMovieById(id, true);
     }
 
     async deleteMovie(id) {
@@ -207,9 +261,11 @@ class MovieService {
         try {
             // إضافة Promise.all 
             await Promise.all([
-                Movie.findByIdAndDelete(id, { session }),
-                Content.findByIdAndDelete(movie.contentId, { session })
-            ]);
+    Movie.findByIdAndDelete(id, { session }),
+    Content.findByIdAndDelete(movie.contentId, { session }),
+    ContentGenre.deleteMany({ contentId: movie.contentId }, { session }),
+    ContentCast.deleteMany({ contentId: movie.contentId }, { session })
+]);
 
             if (session) {
                 await session.commitTransaction();

@@ -25,7 +25,7 @@ class SeasonService {
             }], { session });
 
             await Series.findByIdAndUpdate(
-                data.seriesId, { $inc: { totalSeasons: 1 } }, { session }
+                seriesId, { $inc: { totalSeasons: 1 } }, { session }
             );
 
             if (session) await session.commitTransaction();
