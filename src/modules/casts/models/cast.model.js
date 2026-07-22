@@ -33,7 +33,6 @@ castSchema.pre('findOneAndDelete', async function() {
     if (castId) {
         await mongoose.model('ContentCast').deleteMany({ castId: castId });
     }
-    next();
 });
 
 module.exports = mongoose.model("Cast", castSchema);

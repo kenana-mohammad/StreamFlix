@@ -25,7 +25,6 @@ genreSchema.pre('findOneAndDelete', async function() {
     if (genreId) {
         await mongoose.model('ContentGenre').deleteMany({ genreId: genreId });
     }
-    next();
 });
 
 module.exports = mongoose.model('Genre', genreSchema);
