@@ -5,6 +5,10 @@ const AppError = require('../../../shared/errors/AppError');
 const { CONTENT_TYPE } = require('../../../shared/constants/content-type.constant');
 const { CONTENT_STATUS } = require('../../../shared/constants/content-status.constant');
 
+// Relations Models
+const ContentGenre = require('../models/ContentGenre');
+const ContentCast = require('../models/ContentCast');
+
 const useTransaction = process.env.USE_TRANSACTIONS === 'true';
 
 class MovieService {
@@ -37,6 +41,18 @@ class MovieService {
                 duration: data.duration||null,
                 videoUrl: data.videoUrl
             }], { session });
+            
+            // إضافة التصنيفات إذا تم تمريرها
+            if (data.genres && data.genres.length > 0) {
+                const genreDocs = data.genres.map(genreId => ({ contentId: content[0]._id, genreId }));
+                await ContentGenre.insertMany(genreDocs, { session });
+            }
+
+            // إضافة الممثلين إذا تم تمريرهم
+            if (data.cast && data.cast.length > 0) {
+                const castDocs = data.cast.map(c => ({ contentId: content[0]._id, castId: c.castId, characterName: c.characterName }));
+                await ContentCast.insertMany(castDocs, { session });
+            }
 
             if (session) await session.commitTransaction();
             if (session) session.endSession();
@@ -132,9 +148,11 @@ class MovieService {
         if (session) session.startTransaction();
 
         try {
-
-            await Movie.findByIdAndDelete(id, { session });
-            await Content.findByIdAndDelete(movie.contentId, { session });
+            // إضافة Promise.all 
+            await Promise.all([
+                Movie.findByIdAndDelete(id, { session }),
+                Content.findByIdAndDelete(movie.contentId, { session })
+            ]);
 
             if (session) {
                 await session.commitTransaction();

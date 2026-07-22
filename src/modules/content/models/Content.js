@@ -74,4 +74,18 @@ const contentSchema = new Schema({
 
 contentSchema.index({ type: 1, status: 1 });
 
+// ==========================================
+// Cascade Delete Middleware
+// ==========================================
+contentSchema.pre('findOneAndDelete', async function(next) {
+    const contentId = this.getQuery()['_id'];
+    const session = this.getOptions().session; 
+
+    if (contentId) {
+        await mongoose.model('ContentGenre').deleteMany({ contentId }).session(session);
+        await mongoose.model('ContentCast').deleteMany({ contentId }).session(session);
+    }
+    next();
+});
+
 module.exports = mongoose.model('Content', contentSchema);
