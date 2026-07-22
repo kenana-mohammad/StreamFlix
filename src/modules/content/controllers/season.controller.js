@@ -42,4 +42,3 @@ class SeasonController {
 }
 
 module.exports = new SeasonController();
-module.exports = new SeasonController();

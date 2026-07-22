@@ -1,5 +1,6 @@
 const WatchHistory = require("../../watch-history/models/WatchHistory");
-const Rating = require("../models/rating");
+
+const Rating = require("../models/Rating");
 const Content = require("../../content/models/Content");
 const Profile = require("../../profiles/models/Profile");
 const Subscription = require("../../subscriptions/models/Subscription");

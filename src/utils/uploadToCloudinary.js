@@ -1,31 +1,37 @@
 require("dotenv").config();
 const fs = require("fs");
-const cloudinary = require("cloudinary");
+const cloudinary = require("cloudinary").v2;
 
 cloudinary.config({
     cloud_name: process.env.CLOUD_NAME,
     api_key: process.env.API_KEY_CLOUD,
     api_secret: process.env.API_SECRET_CLOUD,
-})
+});
 
-const uploadToCloudinary = async(file) => {
+const uploadToCloudinary = async (file) => {
     try {
-        // save temp
-        const filePath = __dirname + `/tmp/${file.originalname}`;
-        fs.writeFileSync(filePath, file.buffer);
-
-        const result = await cloudinary.v2.uploader.upload(filePath, {
-            resource_type: "auto" // optional, but recommended
+        const result = await cloudinary.uploader.upload(file.path, {
+            resource_type: "auto",
         });
 
-        fs.unlinkSync(filePath);
+        // Delete local file after successful upload
+        fs.unlinkSync(file.path);
 
-        return result.secure_url; // path
+        return {
+            url: result.secure_url,
+            public_id: result.public_id,
+        };
+
     } catch (error) {
-        console.error(error.message);
-        return null;
+
+        // Delete local file if upload failed
+        if (file.path && fs.existsSync(file.path)) {
+            fs.unlinkSync(file.path);
+        }
+
+        throw error;
     }
-}
+};
 
 module.exports = uploadToCloudinary;
 

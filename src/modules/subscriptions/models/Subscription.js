@@ -6,7 +6,7 @@ const subscriptionSchema = new Schema({
     userId: {
         type: Schema.Types.ObjectId,
         ref: 'User',
-        required: true
+        // required: true
     },
     planId: {
         type: Schema.Types.ObjectId,
@@ -33,18 +33,25 @@ const subscriptionSchema = new Schema({
         type: Boolean,
         default: false
     },
-    activatedBy: {
-        type: Schema.Types.ObjectId,
-        ref: 'User'
-    },
-    paymentProof: {
-        type: String
-    },
+
     notes: {
         type: String
     }
 }, {
-    timestamps: true
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
 });
+subscriptionSchema.virtual('startDateFormatted').get(function() {
+    if (!this.startDate) return null;
+    return this.startDate.toISOString().split('T')[0]; // صيغة YYYY-MM-DD
+});
+subscriptionSchema.virtual('endDateFormatted').get(function() {
+    if (!this.endDate) return null;
+    return this.endDate.toISOString().split('T')[0]; // صيغة YYYY-MM-DD
+});
+
+
+module.exports = mongoose.model('Subscription', subscriptionSchema);
 
 module.exports = mongoose.model('Subscription', subscriptionSchema);
