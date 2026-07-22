@@ -1,7 +1,3 @@
-const { body } = require('express-validator');
-const { CONTENT_STATUS } = require('../../../shared/constants/content-status.constant');
-const { AGE_RATING } = require('../../../shared/constants/age-rating.constant');
-
 const { body, param } = require('express-validator');
 const { CONTENT_STATUS } = require('../../../shared/constants/content-status.constant');
 const { AGE_RATING } = require('../../../shared/constants/age-rating.constant');
@@ -15,7 +11,7 @@ const baseContentValidator = [
     body('releaseYear').isInt({ min: 1900 }).withMessage('Invalid release year'),
     body('status').optional().isIn(Object.values(CONTENT_STATUS)).withMessage('Invalid content status'),
     body('publishAt').optional().isISO8601().toDate().withMessage('Invalid publish date format'),
-    
+
     // Relations 
     body('genres').optional().isArray().withMessage('Genres must be an array of IDs'),
     body('genres.*').optional().isMongoId().withMessage('Invalid Genre ID'),
@@ -31,7 +27,7 @@ const updateContentValidator = [
     body('trailerUrl').optional().isString(),
     body('releaseYear').optional().isInt({ min: 1900 }).withMessage('Invalid release year'),
     body('publishAt').optional().isISO8601().toDate().withMessage('Invalid publish date format'),
-    
+
     // Relations 
     body('genres').optional().isArray().withMessage('Genres must be an array of IDs'),
     body('genres.*').optional().isMongoId().withMessage('Invalid Genre ID'),
