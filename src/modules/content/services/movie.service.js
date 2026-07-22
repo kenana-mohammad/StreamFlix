@@ -12,6 +12,34 @@ const ContentCast = require('../models/ContentCast');
 const useTransaction = process.env.USE_TRANSACTIONS === 'true';
 
 class MovieService {
+    async getMovieById(id, isAdmin = false) {
+        const movie = await Movie.findById(id).populate('contentId');
+        if (!movie) throw new AppError('Movie not found', 404);
+
+        // التحقق من حالة النشر إذا لم يكن المشاهد Admin
+        if (!isAdmin && movie.contentId.status !== CONTENT_STATUS.PUBLISHED) {
+            throw new AppError('Movie not found', 404);
+        }
+
+        const contentId = movie.contentId._id;
+
+        // جلب التصنيفات والممثلين المرتبطين
+        const genreLinks = await ContentGenre.find({ contentId }).populate('genreId');
+        const genres = genreLinks.map(link => link.genreId);
+
+        const castLinks = await ContentCast.find({ contentId }).populate('castId');
+        const cast = castLinks.map(link => ({
+            _id: link._id,
+            actor: link.castId,
+            characterName: link.characterName
+        }));
+
+        return {
+            ...movie.toObject(),
+            genres,
+            cast
+        };
+    }
     async createMovie(data) {
         const session = useTransaction ? await mongoose.startSession() : null;
         if (session) session.startTransaction();
@@ -24,6 +52,7 @@ class MovieService {
             } else {
                 status = CONTENT_STATUS.PUBLISHED;
             }
+
             const content = await Content.create([{
                 title: data.title,
                 description: data.description,
@@ -38,91 +67,118 @@ class MovieService {
 
             const movie = await Movie.create([{
                 contentId: content[0]._id,
-                duration: data.duration||null,
+                duration: data.duration || null,
                 videoUrl: data.videoUrl
             }], { session });
-            
+
+            // مصفوفات لتخزين الوثائق المضافة لربطها في الاستجابة المباشرة
+            let savedGenres = [];
+            let savedCast = [];
+
             // إضافة التصنيفات إذا تم تمريرها
             if (data.genres && data.genres.length > 0) {
                 const genreDocs = data.genres.map(genreId => ({ contentId: content[0]._id, genreId }));
                 await ContentGenre.insertMany(genreDocs, { session });
+                // جلب الأصناف مع بياناتها الأصلية لإرجاعها
+                savedGenres = await ContentGenre.find({ contentId: content[0]._id }).populate('genreId').session(session);
+                savedGenres = savedGenres.map(g => g.genreId);
             }
 
             // إضافة الممثلين إذا تم تمريرهم
             if (data.cast && data.cast.length > 0) {
                 const castDocs = data.cast.map(c => ({ contentId: content[0]._id, castId: c.castId, characterName: c.characterName }));
                 await ContentCast.insertMany(castDocs, { session });
+                // جلب الممثلين مع بياناتهم الأصلية لإرجاعهم
+                savedCast = await ContentCast.find({ contentId: content[0]._id }).populate('castId').session(session);
+                savedCast = savedCast.map(c => ({
+                    _id: c._id,
+                    actor: c.castId,
+                    characterName: c.characterName
+                }));
             }
 
             if (session) await session.commitTransaction();
             if (session) session.endSession();
 
-            return { movie: movie[0], content: content[0] };
+            // إرجاع النتيجة كاملة ومكتملة بجدول الربط
+            return {
+                movie: {
+                    ...movie[0].toObject(),
+                    contentId: content[0]
+                },
+                genres: savedGenres,
+                cast: savedCast
+            };
         } catch (error) {
             if (session) await session.abortTransaction();
             if (session) session.endSession();
             throw error;
         }
     }
-
-    async getMovies(isAdmin = false) {
-        const matchCondition = isAdmin ? {} : { status: CONTENT_STATUS.PUBLISHED };
-
-        const movies = await Movie.find().populate({
-            path: 'contentId',
-            match: matchCondition
-        });
-
-        return movies.filter(movie => movie.contentId !== null);
-    }
-
-    async getMovieById(id, isAdmin = false) {
-        const matchCondition = isAdmin ? {} : { status: CONTENT_STATUS.PUBLISHED };
-
-        const movie = await Movie.findById(id).populate({
-            path: 'contentId',
-            match: matchCondition
-        });
-
-        if (!movie || !movie.contentId) {
-            throw new AppError('Movie not found or not available', 404);
-        }
-
-        return movie;
-    }
-
     async updateMovie(id, data) {
         const movie = await Movie.findById(id);
         if (!movie) throw new AppError('Movie not found', 404);
 
+        const contentId = movie.contentId;
+
         if (data.publishAt !== undefined) {
             const now = new Date();
             const publishDate = new Date(data.publishAt);
-
-
             data.status = (publishDate <= now) ? CONTENT_STATUS.PUBLISHED : CONTENT_STATUS.DRAFT;
         }
+
         const contentFields = ['title', 'description', 'poster', 'ageRating', 'trailerUrl', 'releaseYear', 'status', 'publishAt'];
+        const movieFields = ['duration', 'videoUrl'];
+
         const contentData = {};
         const movieData = {};
 
         for (const key in data) {
-            if (contentFields.includes(key)) contentData[key] = data[key];
-            else movieData[key] = data[key];
+            if (contentFields.includes(key)) {
+                contentData[key] = data[key];
+            } else if (movieFields.includes(key)) {
+                movieData[key] = data[key];
+            }
         }
 
         const session = useTransaction ? await mongoose.startSession() : null;
         if (session) session.startTransaction();
+
         try {
             if (Object.keys(contentData).length > 0) {
-                await Content.findByIdAndUpdate(movie.contentId, contentData, { new: true, runValidators: true, session });
+                await Content.findByIdAndUpdate(contentId, contentData, { new: true, runValidators: true, session });
             }
+
             if (Object.keys(movieData).length > 0) {
                 await Movie.findByIdAndUpdate(id, movieData, { new: true, runValidators: true, session });
             }
 
+            // تحديث الأصناف (Genres): حذف القديم وإدخال الجديد
+            if (data.genres !== undefined) {
+                await ContentGenre.deleteMany({ contentId }, { session });
+                if (Array.isArray(data.genres) && data.genres.length > 0) {
+                    const genreDocs = data.genres.map(genreId => ({ contentId, genreId }));
+                    await ContentGenre.insertMany(genreDocs, { session });
+                }
+            }
+
+            // تحديث الممثلين (Cast): حذف القديم وإدخال الجديد
+            if (data.cast !== undefined) {
+                console.log("Updating Cast with data:", data.cast);
+                await ContentCast.deleteMany({ contentId }, { session });
+                if (Array.isArray(data.cast) && data.cast.length > 0) {
+                    const castDocs = data.cast.map(c => ({
+                        contentId,
+                        castId: c.castId,
+                        characterName: c.characterName
+                    }));
+                    await ContentCast.insertMany(castDocs, { session });
+                }
+            }
+
             if (session) await session.commitTransaction();
             if (session) session.endSession();
+
         } catch (error) {
             if (session) await session.abortTransaction();
             if (session) session.endSession();
@@ -137,7 +193,8 @@ class MovieService {
         if (!movie) throw new AppError('Movie not found', 404);
 
         await Content.findByIdAndUpdate(movie.contentId, { status }, { runValidators: true });
-        return await this.getMovieById(id, true);
+        return await this.getMovieBy
+        Id(id, true);
     }
 
     async deleteMovie(id) {
