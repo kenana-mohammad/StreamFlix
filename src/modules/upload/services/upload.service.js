@@ -1,3 +1,4 @@
+const cloudinary = require("cloudinary").v2;
 const uploadToCloudinary = require("../../../utils/uploadToCloudinary");
 const deleteFromCloudinary = require("../../../utils/deleteFromCloudinary");
 const AppError = require("../../../shared/errors/AppError");
@@ -39,7 +40,26 @@ class UploadService {
         const result = await deleteFromCloudinary(public_id, resource_type);
 
         return result;
-    }   
+    };
+
+    generateSignature = async (folder) => {
+    const timestamp = Math.round(Date.now() / 1000);
+
+    const signature = cloudinary.utils.api_sign_request(
+        { 
+            timestamp ,
+            folder
+        },
+        process.env.API_SECRET_CLOUD
+    );
+
+    return {
+        timestamp,
+        signature,
+        cloudName: process.env.CLOUD_NAME,
+        apiKey: process.env.API_KEY_CLOUD,
+    };
+};
 
 }
 

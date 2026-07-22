@@ -41,6 +41,19 @@ class UploadController {
         );
     };
 
+    generateSignature = async (req, res) => {
+
+    const folder = req.body; 
+    const data = await uploadService.generateSignature(folder);
+
+    return successResponse(
+        res,
+        200,
+        "Upload signature generated successfully",
+        data
+    );
+};
+
 }
 
 module.exports = new UploadController();
