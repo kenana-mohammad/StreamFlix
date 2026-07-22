@@ -1,8 +1,49 @@
+const WatchHistory = require("../../watch-history/models/WatchHistory");
+
 const Rating = require("../models/Rating");
 const Content = require("../../content/models/Content");
-const AppError = require("../../../shared/errors/AppError");
+const Profile = require("../../profiles/models/Profile");
+const Subscription = require("../../subscriptions/models/Subscription");
+const { SUBSCRIPTION_STATUS } = require("../../../shared/constants/subscription-status.constant");
 
 class RatingService {
+
+    async checkWatchHistory(profileId, contentId) {
+
+    const watch = await WatchHistory.findOne({
+        profileId,
+        contentId
+    });
+
+    if (!watch) {
+        throw new Error("You must watch this content before rating");
+    }
+
+    return watch;
+}
+    async getProfileByUserId(userId) {
+        const profile = await Profile.findOne({ userId });
+
+        if (!profile) {
+            throw new Error("Profile not found");
+        }
+
+        return profile;
+    }
+
+    async checkActiveSubscription(userId) {
+
+        const subscription = await Subscription.findOne({
+            userId,
+            status: SUBSCRIPTION_STATUS.ACTIVE
+        });
+
+        if (!subscription) {
+            throw new Error("Active subscription required");
+        }
+
+        return subscription;
+    }
 
     async updateContentRating(contentId) {
 
@@ -18,25 +59,28 @@ class RatingService {
                     0
                 ) / ratingCount;
 
-
-        await Content.findByIdAndUpdate(
-            contentId,
-            {
-                averageRating,
-                ratingCount
-            }
-        );
-
+        await Content.findByIdAndUpdate(contentId, {
+            averageRating,
+            ratingCount
+        });
     }
-
 
     async create(data) {
 
+        const profile = await this.getProfileByUserId(data.userId);
+
+await this.checkActiveSubscription(data.userId);
+
+const profileId = profile._id;
+
+await this.checkWatchHistory(profileId, data.contentId);
+
+        
+
         const existingRating = await Rating.findOne({
-            profileId: data.profileId,
+            profileId,
             contentId: data.contentId
         });
-
 
         let rating;
 
@@ -51,80 +95,30 @@ class RatingService {
         } else {
 
             rating = await Rating.create({
-                profileId: data.profileId,
+                profileId,
                 contentId: data.contentId,
                 rating: data.rating,
                 review: data.review
             });
-
         }
-
 
         await this.updateContentRating(data.contentId);
 
         return rating;
-
     }
 
+    async getMyRatings(userId) {
 
-    async update(contentId, data) {
+        const profile = await this.getProfileByUserId(userId);
 
-        const rating = await Rating.findOne({ contentId });
-
-
-        if (!rating) {
-            throw new AppError("Rating not found", 404);
-        }
-
-
-        rating.rating = data.rating ?? rating.rating;
-        rating.review = data.review ?? rating.review;
-        rating.isUpdated = true;
-
-
-        const updatedRating = await rating.save();
-
-
-        await this.updateContentRating(contentId);
-
-
-        return updatedRating;
-
+        return await Rating.find({
+            profileId: profile._id
+        });
     }
-
-
-    async remove(contentId) {
-
-        const rating = await Rating.findOneAndDelete({ contentId });
-
-
-        if (!rating) {
-            throw new AppError("Rating not found", 404);
-        }
-
-
-        await this.updateContentRating(contentId);
-
-
-        return rating;
-
-    }
-
-
-    async getMyRatings() {
-
-        return await Rating.find();
-
-    }
-
 
     async getContentRating(contentId) {
-
         return await Rating.find({ contentId });
-
     }
-
 }
-
 
 module.exports = new RatingService();
