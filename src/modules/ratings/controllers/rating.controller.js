@@ -3,16 +3,17 @@ const { successResponse } = require("../../../shared/helpers/api-response.helper
 
 class RatingController {
 
-    create = async(req, res) => {
+    create = async (req, res) => {
 
         const {
+            contentId,
             rating,
             review
         } = req.body;
 
         const ratingData = {
             userId: req._user.id,
-            contentId: req.params.contentId,
+            contentId,
             rating,
             review
         };
@@ -28,9 +29,7 @@ class RatingController {
     };
 
     // Front APIs
-    getMyRatings = async(req, res) => {
-
-        console.log("USER:", req._user);
+    getMyRatings = async (req, res) => {
 
         const ratings = await ratingService.getMyRatings(req._user.id);
 
@@ -43,10 +42,11 @@ class RatingController {
     };
 
     // Front APIs
-    getContentRating = async(req, res) => {
-        const contentId = req.params.contentId
+    getContentRating = async (req, res) => {
 
-        const ratings = await ratingService.getContentRating(contentId);
+        const ratings = await ratingService.getContentRating(
+            req.params.contentId
+        );
 
         return successResponse(
             res,
