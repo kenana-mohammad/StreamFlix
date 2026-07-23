@@ -8,11 +8,15 @@ const auth = require("../../../middlewares/auth");
 const {
     createRatingValidation
 } = require("../validations/rating.validation");
+const { checkActiveSubscription } = require("./../../../middlewares/checkActiveSubscription");
+router.get(
+    "/contents/:contentId/rating",
+    asyncHandler(ratingController.getContentRating)
+);
 
 // Create / Update Rating
 router.post(
-    "/",
-    [auth, ...createRatingValidation],
+    "/:contentId", [auth, checkActiveSubscription, ...createRatingValidation],
     asyncHandler(ratingController.create)
 );
 

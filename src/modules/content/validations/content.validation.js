@@ -1,5 +1,3 @@
-
-
 const { body, param } = require('express-validator');
 const { CONTENT_STATUS } = require('../../../shared/constants/content-status.constant');
 const { AGE_RATING } = require('../../../shared/constants/age-rating.constant');
@@ -17,9 +15,9 @@ const baseContentValidator = [
     // Relations 
     body('genres').optional().isArray().withMessage('Genres must be an array of IDs'),
     body('genres.*').optional().isMongoId().withMessage('Invalid Genre ID'),
-    body('cast').optional().isArray().withMessage('Cast must be an array of objects'),
-    body('cast.*.castId').optional().isMongoId().withMessage('Invalid Cast ID'),
-    body('cast.*.characterName').optional().trim().notEmpty().withMessage('Character name is required')
+    body('casts').optional().isArray().withMessage('Cast must be an array of objects'),
+    body('casts.*.castId').optional().isMongoId().withMessage('Invalid Cast ID'),
+    body('casts.*.characterName').optional().trim().notEmpty().withMessage('Character name is required')
 ];
 const updateContentValidator = [
     body('title').optional().trim().notEmpty().withMessage('Title cannot be empty'),
@@ -33,9 +31,9 @@ const updateContentValidator = [
     // Relations 
     body('genres').optional().isArray().withMessage('Genres must be an array of IDs'),
     body('genres.*').optional().isMongoId().withMessage('Invalid Genre ID'),
-    body('cast').optional().isArray().withMessage('Cast must be an array of objects'),
-    body('cast.*.castId').optional().isMongoId().withMessage('Invalid Cast ID'),
-    body('cast.*.characterName').optional().trim().notEmpty().withMessage('Character name is required')
+    body('casts').optional().isArray().withMessage('Cast must be an array of objects'),
+    body('casts.*.castId').optional().isMongoId().withMessage('Invalid Cast ID'),
+    body('casts.*.characterName').optional().trim().notEmpty().withMessage('Character name is required')
 ];
 const changeStatusValidator = [
     body('status').notEmpty().isIn(Object.values(CONTENT_STATUS)).withMessage('Content status is required and must be valid')
