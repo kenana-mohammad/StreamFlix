@@ -3,24 +3,23 @@ const WatchHistory = require("../../watch-history/models/WatchHistory");
 const Rating = require("../models/Rating");
 const Content = require("../../content/models/Content");
 const Profile = require("../../profiles/models/Profile");
-const Subscription = require("../../subscriptions/models/Subscription");
 const { SUBSCRIPTION_STATUS } = require("../../../shared/constants/subscription-status.constant");
 
 class RatingService {
 
     async checkWatchHistory(profileId, contentId) {
 
-    const watch = await WatchHistory.findOne({
-        profileId,
-        contentId
-    });
+        const watch = await WatchHistory.findOne({
+            profileId,
+            contentId
+        });
 
-    if (!watch) {
-        throw new Error("You must watch this content before rating");
+        if (!watch) {
+            throw new Error("You must watch this content before rating");
+        }
+
+        return watch;
     }
-
-    return watch;
-}
     async getProfileByUserId(userId) {
         const profile = await Profile.findOne({ userId });
 
@@ -31,19 +30,7 @@ class RatingService {
         return profile;
     }
 
-    async checkActiveSubscription(userId) {
 
-        const subscription = await Subscription.findOne({
-            userId,
-            status: SUBSCRIPTION_STATUS.ACTIVE
-        });
-
-        if (!subscription) {
-            throw new Error("Active subscription required");
-        }
-
-        return subscription;
-    }
 
     async updateContentRating(contentId) {
 
@@ -52,12 +39,12 @@ class RatingService {
         const ratingCount = ratings.length;
 
         const averageRating =
-            ratingCount === 0
-                ? 0
-                : ratings.reduce(
-                    (sum, item) => sum + item.rating,
-                    0
-                ) / ratingCount;
+            ratingCount === 0 ?
+            0 :
+            ratings.reduce(
+                (sum, item) => sum + item.rating,
+                0
+            ) / ratingCount;
 
         await Content.findByIdAndUpdate(contentId, {
             averageRating,
@@ -69,13 +56,12 @@ class RatingService {
 
         const profile = await this.getProfileByUserId(data.userId);
 
-await this.checkActiveSubscription(data.userId);
 
-const profileId = profile._id;
+        const profileId = profile._id;
 
-await this.checkWatchHistory(profileId, data.contentId);
+        // await this.checkWatchHistory(profileId, data.contentId);
 
-        
+
 
         const existingRating = await Rating.findOne({
             profileId,

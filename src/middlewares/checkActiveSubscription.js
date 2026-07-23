@@ -1,8 +1,6 @@
-const Subscription = require('../models/Subscription');
-
+const Subscription = require('./../modules/subscriptions/models/Subscription');
 const checkActiveSubscription = async(req, res, next) => {
     try {
-        // افترضنا أن الـ verifyToken يضع بيانات المستخدم في req.user أو req.userId
         const userId = req._user.id;
 
         if (!userId) {
