@@ -3,51 +3,50 @@ const { successResponse } = require("../../../shared/helpers/api-response.helper
 
 class RatingController {
 
-create = async (req, res) => {
+    create = async(req, res) => {
 
-    const {
-        contentId,
-        rating,
-        review
-    } = req.body;
-console.log(req._user);
+        const {
+            rating,
+            review
+        } = req.body;
 
-    const ratingData = {
-        userId: req._user.id,
-        contentId,
-        rating,
-        review
+        const ratingData = {
+            userId: req._user.id,
+            contentId: req.params.contentId,
+            rating,
+            review
+        };
+
+        const ratingObj = await ratingService.create(ratingData);
+
+        return successResponse(
+            res,
+            201,
+            "Rating saved successfully",
+            ratingObj
+        );
     };
 
-    const ratingObj = await ratingService.create(ratingData);
-
-    return successResponse(
-        res,
-        201,
-        "Rating saved successfully",
-        ratingObj
-    );
-};
-
     // Front APIs
-getMyRatings = async (req, res) => {
+    getMyRatings = async(req, res) => {
 
-    console.log("USER:", req._user);
-
-    const ratings = await ratingService.getMyRatings(req._user.id);
-
-    return successResponse(
-        res,
-        200,
-        "Ratings fetched successfully",
-        ratings
-    );
-};
-
-    // Front APIs
-    getContentRating = async (req, res) => {
+        console.log("USER:", req._user);
 
         const ratings = await ratingService.getMyRatings(req._user.id);
+
+        return successResponse(
+            res,
+            200,
+            "Ratings fetched successfully",
+            ratings
+        );
+    };
+
+    // Front APIs
+    getContentRating = async(req, res) => {
+        const contentId = req.params.contentId
+
+        const ratings = await ratingService.getContentRating(contentId);
 
         return successResponse(
             res,
