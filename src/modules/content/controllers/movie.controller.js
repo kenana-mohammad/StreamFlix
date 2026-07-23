@@ -3,8 +3,8 @@ const { successResponse } = require('../../../shared/helpers/api-response.helper
 
 class MovieController {
     create = async (req, res) => {
-        const { title, description, poster, ageRating, trailerUrl, releaseYear, status, publishAt, duration, videoUrl , genreIds } = req.body;
-        const data = { title, description, poster, ageRating, trailerUrl, releaseYear, status, publishAt, duration, videoUrl , genreIds};
+        const { title, description, poster, ageRating, trailerUrl, releaseYear, status, publishAt, duration, videoUrl, genres, casts } = req.body;
+        const data = { title, description, poster, ageRating, trailerUrl, releaseYear, status, publishAt, duration, videoUrl, genres, casts };
         
         const result = await movieService.createMovie(data);
         return successResponse(res, 201, 'Movie created successfully', result);
@@ -34,9 +34,9 @@ class MovieController {
 
     update = async (req, res) => {
         const { id } = req.params;
-        const { title, description, poster, ageRating, trailerUrl, releaseYear, status, publishAt, duration, videoUrl } = req.body;
-        const data = { title, description, poster, ageRating, trailerUrl, releaseYear, status, publishAt, duration, videoUrl };
-        
+        const { title, description, poster, ageRating, trailerUrl, releaseYear, status, publishAt, duration, videoUrl, genres, casts } = req.body;
+        const data = { title, description, poster, ageRating, trailerUrl, releaseYear, status, publishAt, duration, videoUrl, genres, casts };
+
         const movie = await movieService.updateMovie(id, data);
         return successResponse(res, 200, 'Movie updated successfully', movie);
     };
