@@ -77,7 +77,6 @@ class PlanController {
 
 
     update = async(req, res) => {
-      
 const {
             name,
             description,
@@ -141,9 +140,4 @@ const {
 
 }
 
-module.exports = new PlanController();
-module.exports = new PlanController();
-module.exports = new PlanController();
-module.exports = new PlanController();
-module.exports = new PlanController();
 module.exports = new PlanController();

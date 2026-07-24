@@ -36,9 +36,29 @@ const subscriptionSchema = new Schema({
 
     notes: {
         type: String
+    },
+    usage: {
+        movies: {
+            type: Number,
+            default: 0,
+            min: 0
+        },
+        series: {
+            type: Number,
+            default: 0,
+            min: 0
+        }
+    },
+    consumedViewKeys: {
+        type: [String],
+        default: [],
+        // Short-lived reservations prevent concurrent requests from consuming
+        // the same profile/content allowance before the usage ledger is written.
+        select: false
     }
 }, {
     timestamps: true,
+    autoIndex: process.env.NODE_ENV !== 'production',
     toJSON: { virtuals: true },
     toObject: { virtuals: true }
 });
@@ -51,7 +71,17 @@ subscriptionSchema.virtual('endDateFormatted').get(function() {
     return this.endDate.toISOString().split('T')[0]; // صيغة YYYY-MM-DD
 });
 
-
-module.exports = mongoose.model('Subscription', subscriptionSchema);
+subscriptionSchema.index({ userId: 1, status: 1, startDate: 1, endDate: 1 });
+subscriptionSchema.index(
+    { userId: 1 },
+    {
+        unique: true,
+        name: 'one_active_subscription_per_user',
+        partialFilterExpression: {
+            status: SUBSCRIPTION_STATUS.ACTIVE,
+            userId: { $type: 'objectId' }
+        }
+    }
+);
 
 module.exports = mongoose.model('Subscription', subscriptionSchema);

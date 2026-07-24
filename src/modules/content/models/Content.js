@@ -3,6 +3,7 @@ const { Schema } = mongoose;
 const { CONTENT_TYPE } = require('../../../shared/constants/content-type.constant');
 const { CONTENT_STATUS } = require('../../../shared/constants/content-status.constant');
 const { AGE_RATING } = require('../../../shared/constants/age-rating.constant');
+const WatchHistory = require('../../watch-history/models/WatchHistory');
 
 const contentSchema = new Schema({
     title: {
@@ -84,6 +85,7 @@ contentSchema.pre('findOneAndDelete', async function() {
     if (contentId) {
         await mongoose.model('ContentGenre').deleteMany({ contentId }).session(session);
         await mongoose.model('ContentCast').deleteMany({ contentId }).session(session);
+        await WatchHistory.deleteMany({ contentId }).session(session);
     }
 });
 

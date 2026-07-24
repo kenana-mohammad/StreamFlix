@@ -14,10 +14,16 @@ class ContentService {
         return contents;
     }
 
-    async getContentById(id, isAdmin = false) {
+    async getContentById(id, isAdmin = false, { session = null } = {}) {
         const matchCondition = isAdmin ? {} : { status: CONTENT_STATUS.PUBLISHED };
 
-        const content = await Content.findOne({ _id: id, ...matchCondition });
+        let query = Content.findOne({ _id: id, ...matchCondition });
+
+        if (session) {
+            query = query.session(session);
+        }
+
+        const content = await query;
 
         if (!content) {
             throw new AppError('Content not found or not available', 404);

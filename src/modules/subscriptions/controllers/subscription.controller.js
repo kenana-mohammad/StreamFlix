@@ -1,11 +1,6 @@
-const { default: mongoose } = require("mongoose");
-const Subscription = require("../models/Subscription");
-const Payment = require("../../Payment/model/Payment");
-const { successResponse, errorResponse } = require("../../../shared/helpers/api-response.helper");
+const { successResponse } = require("../../../shared/helpers/api-response.helper");
 const subscriptionService = require("./../services/subscription.service");
-const Plan = require("../../plans/models/Plan");
-const useTransaction = process.env.USE_TRANSACTIONS === 'true';
-
+const subscriptionUsageService = require("./../services/subscriptionUsage.service");
 class SubscriptionController {
 
     createSubscription = async(req, res) => {
@@ -83,18 +78,14 @@ class SubscriptionController {
             "عرض تفاصيل الاشتراك", result);
     }
 
-
+    getUsage = async(req, res) => {
+        const usage = await subscriptionUsageService.getCurrentUsage(req._user.id);
+        return successResponse(
+            res,
+            200,
+            "Subscription usage retrieved successfully",
+            usage
+        );
+    }
 }
-
-
-
-
-
-
-
-
-
-
-
-module.exports = new SubscriptionController();
 module.exports = new SubscriptionController();

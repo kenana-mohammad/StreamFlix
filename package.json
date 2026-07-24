@@ -4,6 +4,8 @@
   "main": "./src/app.js",
   "scripts": {
     "dev": "nodemon ./src/app.js",
+    "test": "node --test test/*.test.js",
+    "migrate:watch-usage": "node ./src/scripts/migrateWatchHistoryUsage.js",
     "seed:admin": "node ./src/scripts/createAdmin.js",
     "seed:test": "node ./src/scripts/seed.constants.test.js"
   },

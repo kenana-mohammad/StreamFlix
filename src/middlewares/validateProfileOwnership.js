@@ -13,7 +13,7 @@ const validateProfileOwnership = async (req, res, next) => {
     userId: userId
   });
 
-   if(userCheck.status != USER_STATUS.ACTIVE) {
+    if(userCheck.status != USER_STATUS.ACTIVE) {
         return errorResponse(res, 400,
           "User Account is not active"
         )
