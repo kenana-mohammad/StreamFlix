@@ -8,6 +8,7 @@ const role = require("../../../middlewares/role");
 const { imageUpload , videoUpload } = require("../../../middlewares/multer");
 
 const { ROLES } = require("../../../shared/constants/roles");
+const { validateAllowedFolders ,validateFoldersWithFilesExtension } = require("../validations/validationDirectUpload");
 
 router.post(
     "/video",
@@ -37,5 +38,16 @@ router.delete(
     ],
     asyncHandler(uploadController.deleteFile)
 );
+
+router.post(
+    "/signature",
+    [
+         auth,
+        role([ROLES.SUPER_ADMIN, ROLES.CONTENT_MANAGER]),
+        validateAllowedFolders,
+        validateFoldersWithFilesExtension
+    ],
+    asyncHandler(uploadController.generateSignature)
+);  
 
 module.exports = router;
