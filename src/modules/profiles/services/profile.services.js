@@ -89,6 +89,10 @@ class ProfileService {
     verifyPIN = async (profileId , pin) => {
         const profile = await Profile.findById(profileId);
         
+         if (!profile.pin){
+           throw new AppError("This profile doesn't have a PIN!" , 400)
+
+        }
         const isVerified = await passwordService.compare(pin, profile.pin)
         if (!isVerified) {
           throw new AppError("PIN is not correct!" , 400)
@@ -98,8 +102,11 @@ class ProfileService {
 
     addPIN = async (profileId , pin) => {
        const profile = await Profile.findById(profileId);
+       if(profile.pin) {
+        throw new AppError("This profile already has a PIN!")
+       }
        const  hashedPIN = await passwordService.hash(pin);
-
+      
        profile.pin = hashedPIN;
        await profile.save();
   
@@ -108,7 +115,10 @@ class ProfileService {
 
     changePIN = async (profileId, oldPin , newPin) => {
         const profile = await Profile.findById(profileId);
-    
+          
+          if(!profile.pin) {
+            throw new AppError("There is no old PIN! you can add a PIN", 400)
+          }
           const isVerified = await passwordService.compare(oldPin, profile.pin)
           if (!isVerified) {
              throw new AppError("Old PIN is not correct!" , 404)
@@ -119,13 +129,22 @@ class ProfileService {
          
         }
 
-    
+    toggleStatus = async(profileId) => {
+      const profile = await Profile.findById(profileId);
+  
+      profile.status = profile.status === USER_STATUS.ACTIVE 
+        ? USER_STATUS.DEACTIVATED 
+        : USER_STATUS.ACTIVE;
+        
+      await profile.save();
+      return profile
+    }
 
     delete = async (profileId) => {
         const profile = await Profile.findById(profileId);
         if(profile.primaryProfile)
         {
-          throw new AppError("The primary profile can't be deleted!" , 400)
+          throw new AppError("The main profile can't be deleted!" , 400)
         }
         await Promise.all([
             Profile.deleteOne({ _id :profileId }),

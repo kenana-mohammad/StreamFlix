@@ -4,6 +4,8 @@ const ProfileController = require("../controllers/profile.controllers");
 const asyncHandler = require("./../../../utils/asyncHandler");
 const auth = require("../../../middlewares/auth");
 const validateProfileOwnership = require("../../../middlewares/validateProfileOwnership")
+const {checkActiveSubscription} = require("../../../middlewares/checkActiveSubscription")
+const {checkMaxProfiles} = require("../../../middlewares/checkMaxProfiles")
 const {createProfileValidation ,
     updateProfileValidation,
      pinValidation , 
@@ -18,12 +20,12 @@ router.get('/',
 )
 
 router.post('/' , 
-    auth , createProfileValidation,
+    [auth ,checkActiveSubscription,checkMaxProfiles, createProfileValidation],
     asyncHandler(ProfileController.createProfile)
 )
 
 router.put('/:id',
-    [auth , updateProfileValidation, validateProfileOwnership],
+    [auth ,validateProfileOwnership, updateProfileValidation],
     asyncHandler(ProfileController.updateProfile)
 )
 
@@ -33,20 +35,23 @@ router.post('/select/:id',
 )
 
 router.post('/verify-pin/:id',
-    [auth, pinValidation, validateProfileOwnership],
+    [auth, validateProfileOwnership, pinValidation],
     asyncHandler(ProfileController.verifyPIN)
 )
 
 router.put('/add-pin/:id',
-    [auth, pinValidation, validateProfileOwnership],
+    [auth,validateProfileOwnership, pinValidation ],
     asyncHandler(ProfileController.addPIN)
 )
 
 router.put('/change-pin/:id' , 
-    [auth, changePinValidation, validateProfileOwnership],
+    [auth, validateProfileOwnership , changePinValidation],
     asyncHandler(ProfileController.changePIN)
 )
-
+router.put('/toggle-status/:id',
+    [auth , validateProfileOwnership],
+    asyncHandler(ProfileController.toggleStatus)
+)
 router.delete('/:id', 
     [auth , validateProfileOwnership],
     asyncHandler(ProfileController.deleteProfile)

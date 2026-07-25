@@ -86,6 +86,15 @@ class ProfileController {
 
       }
 
+      toggleStatus = async (req, res) => {
+        const id = req.params.id;
+
+        const profile = await ProfileService.toggleStatus(id);
+        return successResponse(res, 200,
+          `Status has been changed succesfully to ${profile.status}`
+        )
+      }
+
      deleteProfile = async (req ,res) => {
       const id = req.params.id
       

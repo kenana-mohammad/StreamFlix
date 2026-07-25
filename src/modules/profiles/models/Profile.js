@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { USER_STATUS } = require('../../../shared/constants/user-status.constant');
 const {
     Schema
 } = mongoose;
@@ -30,6 +31,14 @@ const profileSchema = new Schema({
     primaryProfile : {
         type : Boolean,
         default : false
+    },
+    status : {
+        type : String,
+        enum : {
+            values : Object.values(USER_STATUS),
+            message : "Unaccepted Value"
+        },
+        default : USER_STATUS.ACTIVE
     }
 }, {
     timestamps: true
