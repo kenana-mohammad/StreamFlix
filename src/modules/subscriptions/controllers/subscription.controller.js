@@ -1,10 +1,5 @@
-const { default: mongoose } = require("mongoose");
-const Subscription = require("../models/Subscription");
-const Payment = require("../../Payment/model/Payment");
 const { successResponse, errorResponse } = require("../../../shared/helpers/api-response.helper");
 const subscriptionService = require("./../services/subscription.service");
-const Plan = require("../../plans/models/Plan");
-const useTransaction = process.env.USE_TRANSACTIONS === 'true';
 
 class SubscriptionController {
 
@@ -71,30 +66,39 @@ class SubscriptionController {
         //=================
         //get deatils
     getMySubscriptionDetails = async(req, res) => {
-        const id = req.params.id;
-        const userId = req._user.id;
+            const id = req.params.id;
+            const userId = req._user.id;
+            const data = {
+                id,
+                userId
+            };
+            const result = await subscriptionService.getMySubscriptionDetails(data);
+
+            return successResponse(res, 200,
+                "عرض تفاصيل الاشتراك", result);
+        }
+        //==============================================
+        //
+    upgradeSubscription = async(req, res) => {
+        const { autoRenew, notes, paymentMethod, currency } = req.body;
+
         const data = {
-            id,
-            userId
+            userId: req._user.id,
+            newPlan: req.plan,
+            bodyData: {
+                autoRenew,
+                notes,
+                paymentMethod,
+                currency
+            }
         };
-        const result = await subscriptionService.getMySubscriptionDetails(data);
 
-        return successResponse(res, 200,
-            "عرض تفاصيل الاشتراك", result);
+        const result = await subscriptionService.upgradeSubscription(data);
+
+        return successResponse(res, 201, "تمت ترقية الاشتراك بنجاح", result);
     }
-
 
 }
 
 
-
-
-
-
-
-
-
-
-
-module.exports = new SubscriptionController();
 module.exports = new SubscriptionController();

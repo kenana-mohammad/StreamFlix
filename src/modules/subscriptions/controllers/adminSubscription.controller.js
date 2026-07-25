@@ -25,5 +25,11 @@ class AdminSubscriptionController {
         return successResponse(res, 200,
             "عرض تفاصيل الاشتراك", result);
     }
+
+    getAdminStats = async(req, res) => {
+        const result = await adminSubscriptionService.getAdminStats();
+
+        return successResponse(res, 200, "تم جلب إحصائيات الاشتراكات بنجاح", result);
+    }
 }
 module.exports = new AdminSubscriptionController()

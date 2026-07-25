@@ -10,7 +10,8 @@ const router = express.Router();
 //get all subscription
 router.get("/", [auth, role(ROLES.SUPER_ADMIN)], asyncHandler(adminSubscriptionController.getSubscriptions));
 //================
-//get subscription details 
-router.get("/:id", [auth, role(ROLES.SUPER_ADMIN), id], asyncHandler(adminSubscriptionController.getSubscriptionDetails));
+router.get("/stats", [auth, role(ROLES.SUPER_ADMIN)], asyncHandler(adminSubscriptionController.getAdminStats));
 
+//get subscription details
+router.get("/:id", [auth, role(ROLES.SUPER_ADMIN), id], asyncHandler(adminSubscriptionController.getSubscriptionDetails));
 module.exports = router;
