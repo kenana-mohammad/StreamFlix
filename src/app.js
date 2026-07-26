@@ -56,6 +56,10 @@ app.use("/api/v1/plans", require("./modules/plans/index"));
 app.use("/api/v1/ratings", require("./modules/ratings/index"));
 //genres
 app.use("/api/v1/genres", require("./modules/genres/index"));
+//favorites
+app.use("/api/v1/profiles", require("./modules/favorites/routes/favorite.routes"));
+//home 
+app.use("/api/v1/home", require("./modules/home/routes/home.routes"));
 //section subscription routes
 app.use("/api/v1/subscriptions", require("./modules/subscriptions/routes/subscription.routes"));
 //section dashboard routes
