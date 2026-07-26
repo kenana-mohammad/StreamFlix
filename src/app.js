@@ -54,6 +54,12 @@ app.use("/api/v1/plans", require("./modules/plans/index"));
 
 //ratings
 app.use("/api/v1/ratings", require("./modules/ratings/index"));
+
+// ratings admin
+app.use(
+    "/api/v1/admin/ratings",
+    require("./modules/ratings/routes/adminRating.routes")
+);
 //genres
 app.use("/api/v1/genres", require("./modules/genres/index"));
 //section subscription routes
@@ -69,6 +75,11 @@ app.use('/api/v1/admin/subscriptions', require("./modules/subscriptions/routes/a
 app.use(notFound);
 app.use(errorHandler);
 
+//watchlist
+app.use(
+  "/api/v1/profiles",
+  require("./modules/Watchlist")
+);
 
 const mongoose = require('mongoose');
 mongoose.connect(MONGOOSE_URL).then(() => {
