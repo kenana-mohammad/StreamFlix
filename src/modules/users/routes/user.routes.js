@@ -4,7 +4,7 @@ const asyncHandler = require('../../../utils/asyncHandler');
 const {
     updateProfileValidate
 } = require('../validations/updateProfileValidate');
-const auth = require('../../../middlewares/Auth');
+const auth = require('../../../middlewares/auth');
 
 const router = express.Router();
 //profile

@@ -1,6 +1,7 @@
 const { successResponse, errorResponse } = require("../../../shared/helpers/api-response.helper");
 const subscriptionService = require("./../services/subscription.service");
 
+const subscriptionUsageService = require("./../services/subscriptionUsage.service");
 class SubscriptionController {
 
     createSubscription = async(req, res) => {
@@ -96,6 +97,18 @@ class SubscriptionController {
         const result = await subscriptionService.upgradeSubscription(data);
 
         return successResponse(res, 201, "تمت ترقية الاشتراك بنجاح", result);
+    }
+
+    getUsage = async(req, res) => {
+        const userId = req._user.id;
+        const usage = await subscriptionUsageService.getUsageSummary(userId);
+
+        return successResponse(
+            res,
+            200,
+            "Subscription usage retrieved successfully",
+            usage
+        );
     }
 
 }

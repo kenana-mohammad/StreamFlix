@@ -2,8 +2,8 @@ const express = require('express');
 const router = express.Router();
 const contentController = require('../controllers/content.controller');
 const validate = require('../../../middlewares/validate');
-const auth = require('../../../middlewares/Auth');
-const role = require('../../../middlewares/Role');
+const auth = require('../../../middlewares/auth');
+const role = require('../../../middlewares/role');
 const { contentIdValidator } = require('../validations/content.validation');
 const asyncHandler = require('../../../utils/asyncHandler');
 

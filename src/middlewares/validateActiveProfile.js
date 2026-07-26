@@ -5,7 +5,7 @@ const AppError = require("../shared/errors/AppError");
 
 const validateActiveProfile = async(req, res, next) => {
     try {
-        const profileId = req.headers['x-profile-id'];
+        const profileId = req.params.profileId || req.headers['x-profile-id'];
 
         if (!profileId) {
             return next(new AppError("Active profile is required! Please select a profile first.", 400));

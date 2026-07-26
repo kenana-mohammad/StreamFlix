@@ -13,6 +13,9 @@ const MONGOOSE_URL = process.env.MONGOOSE_URL;
 const notFound = require('./middlewares/notFound');
 const errorHandler = require('./middlewares/errorHandler');
 const schedulerService = require('./modules/content/services/scheduler.service');
+const watchHistoryIndexService = require(
+    './modules/watch-history/services/watchHistoryIndex.service'
+);
 
 const { initSchedulers } = require('./scheduler/index');
 
@@ -58,6 +61,8 @@ app.use("/api/v1/ratings", require("./modules/ratings/index"));
 app.use("/api/v1/genres", require("./modules/genres/index"));
 //section subscription routes
 app.use("/api/v1/subscriptions", require("./modules/subscriptions/routes/subscription.routes"));
+//watch history, resume watching, usage-related views, and history analytics
+app.use('/api/v1', require('./modules/watch-history'));
 //section dashboard routes
 app.use('/api/v1/admin/analytics', require('./modules/dashboard/routes/dashboard.routes'));
 app.use('/api/v1/admin/users', require('./modules/dashboard/routes/dashboard.users.route'));
@@ -71,8 +76,9 @@ app.use(errorHandler);
 
 
 const mongoose = require('mongoose');
-mongoose.connect(MONGOOSE_URL).then(() => {
+mongoose.connect(MONGOOSE_URL).then(async() => {
 
+    await watchHistoryIndexService.ensureIndexes();
     schedulerService.init();
     initSchedulers();
     console.log('Scheduler initialized successfully');

@@ -1,9 +1,9 @@
 const express = require("express");
 const asyncHandler = require("../../../utils/asyncHandler");
-const auth = require("../../../middlewares/Auth");
+const auth = require("../../../middlewares/auth");
 const checkPlanActive = require("../../plans/middlewares/checkPlanActive");
 const id = require("../../../middlewares/id");
-const role = require("../../../middlewares/Role");
+const role = require("../../../middlewares/role");
 const { ROLES } = require("../../../shared/constants/roles.constant");
 const adminSubscriptionController = require("../controllers/adminSubscription.controller");
 const router = express.Router();

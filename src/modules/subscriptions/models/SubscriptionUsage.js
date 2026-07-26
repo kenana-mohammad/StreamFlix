@@ -21,50 +21,48 @@ const subscriptionUsageSchema = new Schema({
     seriesUsedCount: {
         type: Number,
         default: 0
-    }
+    },
+    periodStart: {
+        type: Date,
+        default: null
+    },
+    periodEnd: {
+        type: Date,
+        default: null
+    },
+    movieViewKeys: [{
+        type: String
+    }],
+    seriesViewKeys: [{
+        type: String
+    }]
 }, {
     timestamps: true
 });
 
-/**
- * @param {ObjectId} userId 
- * @param {Object} plan (بيانات الباقة)
- * @param {ObjectId} subscriptionId 
- * @param {String} contentType ('movie' أو 'series')
- */
-subscriptionUsageSchema.statics.checkAndConsume = async function(userId, plan, subscriptionId, contentType) {
-    if (!plan.isLimited) {
-        return;
-    }
+subscriptionUsageSchema.index({
+    userId: 1,
+    subscriptionId: 1
+});
 
-    let usage = await this.findOne({ subscriptionId });
-    if (!usage) {
-        usage = await this.create({
-            subscriptionId,
-            userId,
-            moviesUsedCount: 0,
-            seriesUsedCount: 0
-        });
-    }
+subscriptionUsageSchema.path('moviesUsedCount').validate({
+    validator: Number.isInteger,
+    message: 'Movie usage must be an integer'
+});
 
-    // 3. الفحص والخصم بناءً على نوع المحتوى
-    if (contentType === 'movie') {
-        if (usage.moviesUsedCount >= plan.maxMovies) {
-            const AppError = require('./../../../shared/errors/AppError');
-            // عدل مسار الـ Error حسب مشروعك
-            throw new AppError("لقد استنفدت الحد الأقصى للأفلام المسموحة في باقتك.", 403);
-        }
-        usage.moviesUsedCount += 1;
-    } else if (contentType === 'series') {
-        if (usage.seriesUsedCount >= plan.maxSeries) {
-            const AppError = require('./../../../shared/errors/AppError');
-            throw new AppError("لقد استنفدت الحد الأقصى للمسلسلات المسموحة في باقتك يمكننك الترقية", 403);
-        }
-        usage.seriesUsedCount += 1;
-    }
+subscriptionUsageSchema.path('seriesUsedCount').validate({
+    validator: Number.isInteger,
+    message: 'Series usage must be an integer'
+});
 
-    await usage.save();
-};
+subscriptionUsageSchema.path('moviesUsedCount').validate({
+    validator: value => value >= 0,
+    message: 'Movie usage cannot be negative'
+});
 
-module.exports = mongoose.model('SubscriptionUsage', subscriptionUsageSchema);
+subscriptionUsageSchema.path('seriesUsedCount').validate({
+    validator: value => value >= 0,
+    message: 'Series usage cannot be negative'
+});
+
 module.exports = mongoose.model('SubscriptionUsage', subscriptionUsageSchema);

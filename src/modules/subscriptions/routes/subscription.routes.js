@@ -1,13 +1,14 @@
 const express = require("express");
 const subscriptionController = require("../controllers/subscription.controller");
 const asyncHandler = require("../../../utils/asyncHandler");
-const auth = require("../../../middlewares/Auth");
+const auth = require("../../../middlewares/auth");
 const checkPlanActive = require("../../plans/middlewares/checkPlanActive");
 const id = require("../../../middlewares/id");
 const { createSubscriptionValidation, renewManualValidation } = require("../validations/subscription.validation");
 const { checkActiveSubscription } = require("../../../middlewares/checkActiveSubscription");
 const router = express.Router();
-//get my subscription
+//get account subscription usage
+router.get("/usage", [auth, checkActiveSubscription], asyncHandler(subscriptionController.getUsage));//get my subscription
 router.get("/my-subscriptions", [auth], asyncHandler(subscriptionController.getMySubscriptions));
 //================
 //get subscription details 

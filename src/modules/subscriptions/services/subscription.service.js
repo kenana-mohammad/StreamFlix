@@ -292,4 +292,3 @@ class SubscriptionService {
 
 
 module.exports = new SubscriptionService()
-module.exports = new SubscriptionService()

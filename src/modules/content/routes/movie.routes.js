@@ -7,7 +7,7 @@ const { createMovieValidator, movieIdValidator, updateMovieValidator } = require
 const { changeStatusValidator } = require('../validations/content.validation');
 const asyncHandler = require('../../../utils/asyncHandler');
 const { ROLES } = require('../../../shared/constants/roles.constant');
-const auth = require('../../../middlewares/Auth');
+const auth = require('../../../middlewares/auth');
 
 // Admin & Content Manager Routes
 router.post('/admin',

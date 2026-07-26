@@ -14,15 +14,12 @@ const auth = async(req, res, next) => {
             return errorResponse(res, 403, "يجب تسجيل الدخول");
         }
         const decoded = jwtService.verifyAccessToken(token);
-        req._user = {
-            ...decoded
-        }
-        console.log(req._user = {
-            ...decoded
-        })
-        const device = await Device.findOne({
-            userId: decoded.id,
-            deviceId: decoded.deviceId
+          req._user = {
+              ...decoded
+          }
+          const device = await Device.findOne({
+              userId: decoded.id,
+              deviceId: decoded.deviceId
         });
 
 
@@ -34,10 +31,9 @@ const auth = async(req, res, next) => {
                 message: "تم تسجيل الخروج من هذا الجهاز"
             });
 
-        }
-        console.log(decoded)
+          }
 
-        next()
+          next()
 
     } catch (error) {
 
