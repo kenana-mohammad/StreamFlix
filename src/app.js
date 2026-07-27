@@ -67,6 +67,8 @@ app.use('/api/v1/dashboard', require('./modules/dashboard/routes/dashboard.route
 app.use('/api/v1/dashboard/users', require('./modules/dashboard/routes/dashboard.users.route'));
 
 app.use('/api/v1/admin/subscriptions', require("./modules/subscriptions/routes/adminSubscription.routes"));
+
+app.use('/api/v1/home' , require("./modules/home/routes/home.routes"))
 app.use(notFound);
 app.use(errorHandler);
 

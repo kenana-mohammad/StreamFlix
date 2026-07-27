@@ -1,25 +1,9 @@
-const WatchHistory = require("../../watch-history/models/WatchHistory");
-
 const Rating = require("../models/Rating");
 const Content = require("../../content/models/Content");
 const Profile = require("../../profiles/models/Profile");
-const { SUBSCRIPTION_STATUS } = require("../../../shared/constants/subscription-status.constant");
 
 class RatingService {
 
-    async checkWatchHistory(profileId, contentId) {
-
-        const watch = await WatchHistory.findOne({
-            profileId,
-            contentId
-        });
-
-        if (!watch) {
-            throw new Error("You must watch this content before rating");
-        }
-
-        return watch;
-    }
     async getProfileByUserId(userId) {
         const profile = await Profile.findOne({ userId });
 
@@ -30,38 +14,33 @@ class RatingService {
         return profile;
     }
 
-
-
     async updateContentRating(contentId) {
-
         const ratings = await Rating.find({ contentId });
 
         const ratingCount = ratings.length;
 
         const averageRating =
-            ratingCount === 0 ?
-            0 :
-            ratings.reduce(
-                (sum, item) => sum + item.rating,
-                0
-            ) / ratingCount;
+            ratingCount === 0
+                ? 0
+                : ratings.reduce(
+                    (sum, item) => sum + item.rating,
+                    0
+                ) / ratingCount;
 
-        await Content.findByIdAndUpdate(contentId, {
-            averageRating,
-            ratingCount
-        });
+        await Content.findByIdAndUpdate(
+            contentId,
+            {
+                averageRating,
+                ratingCount
+            }
+        );
     }
 
     async create(data) {
 
         const profile = await this.getProfileByUserId(data.userId);
 
-
         const profileId = profile._id;
-
-        // await this.checkWatchHistory(profileId, data.contentId);
-
-
 
         const existingRating = await Rating.findOne({
             profileId,
@@ -103,6 +82,7 @@ class RatingService {
     }
 
     async getContentRating(contentId) {
+
         return await Rating.find({ contentId });
     }
 }
