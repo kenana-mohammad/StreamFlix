@@ -51,30 +51,56 @@ class ConsumptionService {
      * "شو استهلكته هالشهر" بالتفصيل، مو بس رقم إجمالي).
      */
     async getConsumedContentList(subscriptionId, { page = 1, limit = 20 } = {}) {
-        const skip = (page - 1) * limit;
+            const skip = (page - 1) * limit;
 
-        const [items, total] = await Promise.all([
-            SubscriptionConsumption.find({ subscriptionId })
-            .sort({ consumedAt: -1 })
-            .skip(skip)
-            .limit(limit)
-            .populate('contentId', 'title poster type'),
+            const [items, total] = await Promise.all([
+                SubscriptionConsumption.find({ subscriptionId })
+                .sort({ consumedAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .populate('contentId', 'title poster type'),
 
 
-            SubscriptionConsumption.countDocuments({ subscriptionId })
-        ]);
+                SubscriptionConsumption.countDocuments({ subscriptionId })
+            ]);
 
-        return {
-            items,
-            pagination: {
-                page,
-                limit,
-                total,
-                totalPages: Math.ceil(total / limit)
-            }
-        };
+            return {
+                items,
+                pagination: {
+                    page,
+                    limit,
+                    total,
+                    totalPages: Math.ceil(total / limit)
+                }
+            };
+        }
+        //===================================================
+        //
+    async resetConsumption(subscriptionId, session = null) {
+
+        const usageQuery =
+            SubscriptionUsage.findOneAndUpdate({
+                subscriptionId
+            }, {
+                moviesUsedCount: 0,
+                seriesUsedCount: 0
+            }, {
+                new: true
+            });
+
+        const consumptionQuery =
+            SubscriptionConsumption.deleteMany({
+                subscriptionId
+            });
+
+        if (session) {
+            usageQuery.session(session);
+            consumptionQuery.session(session);
+        }
+
+        await usageQuery;
+        await consumptionQuery;
     }
-
 
 }
 

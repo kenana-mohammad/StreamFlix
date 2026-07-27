@@ -30,7 +30,7 @@ router.put('/:id', [auth, validateProfileOwnership, updateProfileValidation],
     asyncHandler(ProfileController.updateProfile)
 )
 
-router.post('/select/:id', [auth, checkActiveSubscription, validateProfileOwnership],
+router.post('/select/:id', [auth, validateProfileOwnership],
     asyncHandler(ProfileController.selectProfile)
 )
 

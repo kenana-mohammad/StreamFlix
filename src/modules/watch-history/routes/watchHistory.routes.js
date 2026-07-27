@@ -27,7 +27,6 @@ router.get(
 
     [
         auth,
-        checkActiveSubscription,
         validateActiveProfile
     ],
 
@@ -35,14 +34,21 @@ router.get(
         watchHistoryController.getHistory
     )
 );
-
+router.get(
+    '/history/:contentId', [
+        auth,
+        validateActiveProfile
+    ],
+    asyncHandler(
+        watchHistoryController.getOne
+    )
+);
 
 router.delete(
     '/history/:contentId',
 
     [
         auth,
-        checkActiveSubscription,
         validateActiveProfile
     ],
 
@@ -57,7 +63,6 @@ router.delete(
 
     [
         auth,
-        checkActiveSubscription,
         validateActiveProfile
     ],
 

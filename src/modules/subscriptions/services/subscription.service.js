@@ -179,7 +179,7 @@ class SubscriptionService {
                 filter.status = status;
             }
             const mySubscriptions = await Subscription.find(filter).populate("userId", "name email")
-                .populate("planId", "name price duration").sort({ createdAt: -1 });
+                .populate("planId", "name price duration isLimited maxProfiles ").sort({ createdAt: -1 });
             return mySubscriptions
 
         }
@@ -291,5 +291,4 @@ class SubscriptionService {
 
 
 
-module.exports = new SubscriptionService()
 module.exports = new SubscriptionService()

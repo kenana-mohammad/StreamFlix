@@ -558,7 +558,33 @@ class WatchHistoryService {
      * ملاحظة:
      * حذف History لا يعيد quota.
      */
+    //===============================================
+    //
+    getOne = async(profileId, contentId) => {
+        const history = await WatchHistory.findOne({
+                contentId,
+                profileId
+            })
+            .populate(
+                'contentId',
+                'title poster type viewsCount'
+            )
+            .populate(
+                'episodeId',
+                'title episodeNumber duration'
+            );
 
+        if (!history) {
+            return {
+                progressTime: 0,
+                totalDuration: 0,
+                completed: false
+            };
+        }
+
+        return history;
+
+    }
     async deleteOne(
         profileId,
         contentId,
@@ -599,5 +625,7 @@ class WatchHistoryService {
 }
 
 
+module.exports =
+    new WatchHistoryService();
 module.exports =
     new WatchHistoryService();

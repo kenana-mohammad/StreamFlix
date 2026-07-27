@@ -62,7 +62,23 @@ class WatchHistoryController {
         );
     };
 
+    //=============================================================
+    getOne = async(req, res) => {
 
+        const { contentId } = req.params;
+
+        const history = await watchHistoryService.getOne(
+            req.activeProfile._id,
+            contentId
+        );
+
+        return successResponse(
+            res,
+            200,
+            "Watch progress retrieved successfully",
+            history
+        );
+    };
     /**
      * DELETE /api/v1/history/:contentId
      * حذف سجل مشاهدة محتوى معين للبروفايل الحالي
@@ -102,5 +118,7 @@ class WatchHistoryController {
         );
     };
 }
+
+module.exports = new WatchHistoryController();
 
 module.exports = new WatchHistoryController();

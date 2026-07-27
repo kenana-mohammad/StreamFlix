@@ -1,6 +1,7 @@
 const cron = require('node-cron');
 const Subscription = require('../modules/subscriptions/models/Subscription');
 const Payment = require('../modules/Payment/model/Payment');
+const consumptionService = require('../modules/subscriptions/services/consumption.service');
 
 class SubscriptionScheduler {
     /**
@@ -46,6 +47,11 @@ class SubscriptionScheduler {
                     sub.endDate = newEndDate;
                     sub.status = "active";
                     await sub.save();
+                    // بداية دورة اشتراك جديدة
+                    // لذلك نصفر الاستهلاك ونحذف المحتوى المستهلك
+                    await consumptionService.resetConsumption(sub._id);
+
+
 
                     // Retrieve last successful payment to retain currency and payment method preferences
                     const lastPayment = await Payment.findOne({ subscriptionId: sub._id, status: "completed" }).sort({ createdAt: -1 });
