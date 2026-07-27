@@ -17,9 +17,6 @@ router.get(
     asyncHandler(consumptionController.getConsumedContent)
 );
 
-router.get(
-    '/consumption/profile', [auth, checkActiveSubscription, validateActiveProfile],
-    asyncHandler(consumptionController.getProfileBreakdown)
-);
+
 
 module.exports = router;

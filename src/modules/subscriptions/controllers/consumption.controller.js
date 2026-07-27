@@ -35,21 +35,6 @@ class ConsumptionController {
         });
     }
 
-    /**
-     * GET /api/v1/subscriptions/consumption/profile
-     * استهلاك البروفايل الحالي تحديداً ضمن الاشتراك (للعرض فقط)
-     */
-    async getProfileBreakdown(req, res) {
-        const breakdown = await consumptionService.getProfileConsumptionBreakdown(
-            req.subscription._id,
-            req.activeProfile._id
-        );
-
-        res.status(200).json({
-            status: 'success',
-            data: { breakdown }
-        });
-    }
 }
 
 module.exports = new ConsumptionController();

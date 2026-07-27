@@ -16,11 +16,9 @@ router.get("/stats", [auth, role(ROLES.SUPER_ADMIN)], asyncHandler(adminSubscrip
 
 //================
 // تحليلات المشاهدة: أكثر مشاهدة / الأكثر شعبية / نشاط يومي
-// (لازم تجي قبل /:id وإلا Express بيحاول يعتبر "analytics" قيمة لـ :id)
 router.get("/analytics", [auth, role(ROLES.SUPER_ADMIN)], asyncHandler(adminSubscriptionController.getAnalytics));
 
 //================
-// نظرة عامة على استهلاك الكوتا عبر كل الاشتراكات
 router.get("/consumption/overview", [auth, role(ROLES.SUPER_ADMIN)], asyncHandler(adminSubscriptionController.getConsumptionOverview));
 
 //get subscription details

@@ -30,7 +30,6 @@ const checkActiveSubscription = async(req, res, next) => {
             );
         }
 
-        // نخزن الاشتراك حتى يستخدمه الـ Controller / Service
         req.subscription = activeSubscription;
 
         next();

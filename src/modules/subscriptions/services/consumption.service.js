@@ -58,8 +58,8 @@ class ConsumptionService {
             .sort({ consumedAt: -1 })
             .skip(skip)
             .limit(limit)
-            .populate('contentId', 'title poster type')
-            .populate('consumedByProfileId', 'name avatar'),
+            .populate('contentId', 'title poster type'),
+
 
             SubscriptionConsumption.countDocuments({ subscriptionId })
         ]);
@@ -75,26 +75,7 @@ class ConsumptionService {
         };
     }
 
-    /**
-     * استهلاك بروفايل معيّن تحديداً ضمن الاشتراك الحالي - يفيد صاحب الحساب
-     * ليعرف "مين بالعائلة يستهلك أكتر من الكوتا المشتركة".
-     * (ملاحظة: هذا للعرض/الإحصاء فقط، ولا يُستخدم أبداً كأساس لفحص الكوتا،
-     * لأن الكوتا نفسها على مستوى الاشتراك كامل وليس البروفايل).
-     */
-    async getProfileConsumptionBreakdown(subscriptionId, profileId) {
-        const items = await SubscriptionConsumption.find({
-                subscriptionId,
-                consumedByProfileId: profileId
-            })
-            .sort({ consumedAt: -1 })
-            .populate('contentId', 'title poster type');
 
-        return {
-            profileId,
-            totalConsumedByThisProfile: items.length,
-            items
-        };
-    }
 }
 
 module.exports = new ConsumptionService();
