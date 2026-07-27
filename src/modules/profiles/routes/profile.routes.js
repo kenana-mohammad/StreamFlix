@@ -7,15 +7,17 @@ const validateProfileOwnership = require("../../../middlewares/validateProfileOw
 const {checkActiveSubscription} = require("../../../middlewares/checkActiveSubscription")
 const {checkMaxProfiles} = require("../../../middlewares/checkMaxProfiles")
 const {createProfileValidation ,
+const {
+    createProfileValidation,
     updateProfileValidation,
-     pinValidation , 
-     changePinValidation }
-      = require("../validations/profile.validation");
+    pinValidation,
+    changePinValidation
+} = require("../validations/profile.validation");
+const { checkActiveSubscription } = require("../../../middlewares/checkActiveSubscription");
 
 
 
-router.get('/', 
-    [auth],
+router.get('/', [auth],
     asyncHandler(ProfileController.getAll)
 )
 
@@ -26,11 +28,13 @@ router.post('/' ,
 
 router.put('/:id',
     [auth ,validateProfileOwnership, updateProfileValidation],
+
+
+
     asyncHandler(ProfileController.updateProfile)
 )
 
-router.post('/select/:id',
-    [auth , validateProfileOwnership],
+router.post('/select/:id', [auth, checkActiveSubscription, validateProfileOwnership],
     asyncHandler(ProfileController.selectProfile)
 )
 
@@ -54,6 +58,7 @@ router.put('/toggle-status/:id',
 )
 router.delete('/:id', 
     [auth , validateProfileOwnership],
+
     asyncHandler(ProfileController.deleteProfile)
 )
 

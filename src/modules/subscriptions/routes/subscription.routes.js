@@ -5,6 +5,7 @@ const auth = require("../../../middlewares/Auth");
 const checkPlanActive = require("../../plans/middlewares/checkPlanActive");
 const id = require("../../../middlewares/id");
 const { createSubscriptionValidation, renewManualValidation } = require("../validations/subscription.validation");
+const { checkActiveSubscription } = require("../../../middlewares/checkActiveSubscription");
 const router = express.Router();
 //get my subscription
 router.get("/my-subscriptions", [auth], asyncHandler(subscriptionController.getMySubscriptions));
@@ -17,6 +18,9 @@ router.get("/my-subscriptions/:id", [auth, id], asyncHandler(subscriptionControl
 router.put("/renewManual/:subscriptionId", [auth, ...renewManualValidation], asyncHandler(subscriptionController.renewManual));
 //canclled
 router.put("/cancel-subscription/:id", [auth], asyncHandler(subscriptionController.cancelSubscription));
+//upgrade
+
+router.post("/upgrade-subscription/:planId", [auth, checkPlanActive, checkActiveSubscription], asyncHandler(subscriptionController.upgradeSubscription));
 
 //الاشتراك
 router.post("/:planId", [auth, checkPlanActive, ...createSubscriptionValidation], asyncHandler(subscriptionController.createSubscription));

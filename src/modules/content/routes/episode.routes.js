@@ -12,7 +12,6 @@ const { ROLES } = require('../../../shared/constants/roles.constant');
 
 // Admin & Content Manager Routes
 router.post('/admin/season/:seasonId',
-   role([ROLES.SUPER_ADMIN, ROLES.CONTENT_MANAGER]),
     createEpisodeValidator, validate, asyncHandler(episodeController.create));
 router.put('/admin/:id', auth, role([ROLES.SUPER_ADMIN, ROLES.CONTENT_MANAGER]), episodeIdValidator, updateEpisodeValidator, validate, asyncHandler(episodeController.update));
 router.patch('/admin/:id/status', auth, role([ROLES.SUPER_ADMIN, ROLES.CONTENT_MANAGER]), episodeIdValidator, changeStatusValidator, validate, asyncHandler(episodeController.changeStatus));
