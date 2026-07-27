@@ -15,8 +15,8 @@ const errorHandler = require('./middlewares/errorHandler');
 const schedulerService = require('./modules/content/services/scheduler.service');
 
 const { initSchedulers } = require('./scheduler/index');
-
-//use server support cookies
+const subscriptionsModuleRoutes = require("./modules/subscriptions/index")
+    //use server support cookies
 const cookies = require('cookie-parser');
 const {
     limiter
@@ -46,8 +46,8 @@ app.use('/api/v1/auth', require("./modules/auth/routes/auth.routes"));
 //profile
 app.use('/api/v1/users', require("./modules/users/routes/user.routes"));
 //profile alaa
-app.use('/api/v1/users/profiles' , require("./modules/profiles/routes/profile.routes"))
-//cast
+app.use('/api/v1/users/profiles', require("./modules/profiles/routes/profile.routes"))
+    //cast
 app.use('/api/v1/cast', require('./modules/casts/routes/cast.routes'));
 //plans
 app.use("/api/v1/plans", require("./modules/plans/index"));
@@ -57,7 +57,8 @@ app.use("/api/v1/ratings", require("./modules/ratings/index"));
 //genres
 app.use("/api/v1/genres", require("./modules/genres/index"));
 //section subscription routes
-app.use("/api/v1/subscriptions", require("./modules/subscriptions/routes/subscription.routes"));
+app.use('/api/v1/subscriptions', subscriptionsModuleRoutes);
+app.use('/api/v1/watch', require("./modules/watch-history/routes/watchHistory.routes"));
 //section dashboard routes
 app.use('/api/v1/admin/analytics', require('./modules/dashboard/routes/dashboard.routes'));
 app.use('/api/v1/admin/users', require('./modules/dashboard/routes/dashboard.users.route'));

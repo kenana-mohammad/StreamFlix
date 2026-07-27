@@ -7,11 +7,23 @@ const role = require("../../../middlewares/Role");
 const { ROLES } = require("../../../shared/constants/roles.constant");
 const adminSubscriptionController = require("../controllers/adminSubscription.controller");
 const router = express.Router();
+
 //get all subscription
 router.get("/", [auth, role(ROLES.SUPER_ADMIN)], asyncHandler(adminSubscriptionController.getSubscriptions));
+
 //================
 router.get("/stats", [auth, role(ROLES.SUPER_ADMIN)], asyncHandler(adminSubscriptionController.getAdminStats));
 
+//================
+// تحليلات المشاهدة: أكثر مشاهدة / الأكثر شعبية / نشاط يومي
+// (لازم تجي قبل /:id وإلا Express بيحاول يعتبر "analytics" قيمة لـ :id)
+router.get("/analytics", [auth, role(ROLES.SUPER_ADMIN)], asyncHandler(adminSubscriptionController.getAnalytics));
+
+//================
+// نظرة عامة على استهلاك الكوتا عبر كل الاشتراكات
+router.get("/consumption/overview", [auth, role(ROLES.SUPER_ADMIN)], asyncHandler(adminSubscriptionController.getConsumptionOverview));
+
 //get subscription details
 router.get("/:id", [auth, role(ROLES.SUPER_ADMIN), id], asyncHandler(adminSubscriptionController.getSubscriptionDetails));
+
 module.exports = router;

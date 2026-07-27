@@ -1,38 +1,42 @@
-const Subscription = require('./../modules/subscriptions/models/Subscription');
+const Subscription = require('../modules/subscriptions/models/Subscription');
+const AppError = require('../shared/errors/AppError');
+
 const checkActiveSubscription = async(req, res, next) => {
     try {
         const userId = req._user.id;
 
         if (!userId) {
-            return res.status(401).json({
-                success: false,
-                message: "Unauthorized: User not authenticated"
-            });
+            return next(
+                new AppError(
+                    'Unauthorized: User not authenticated',
+                    401
+                )
+            );
         }
 
         const activeSubscription = await Subscription.findOne({
-            userId: userId,
+            userId,
             status: 'active',
+            startDate: { $lte: new Date() },
             endDate: { $gt: new Date() }
         });
 
         if (!activeSubscription) {
-            return res.status(403).json({
-                success: false,
-                message: "Access denied: You do not have an active subscription or your subscription has expired."
-            });
+            return next(
+                new AppError(
+                    'You do not have an active subscription or your subscription has expired.',
+                    403
+                )
+            );
         }
 
+        // نخزن الاشتراك حتى يستخدمه الـ Controller / Service
         req.subscription = activeSubscription;
 
         next();
+
     } catch (error) {
-        console.error('[Check Subscription Middleware Error]:', error);
-        return res.status(500).json({
-            success: false,
-            message: "Internal server error during subscription verification",
-            error: error.message
-        });
+        next(error);
     }
 };
 
