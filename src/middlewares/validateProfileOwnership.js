@@ -4,7 +4,7 @@ const { errorResponse } = require("../../src/shared/helpers/api-response.helper"
 const {USER_STATUS } = require('../../src/shared/constants/user-status.constant');
 
 const validateProfileOwnership = async (req, res, next) => {
-  const id =  req.params.id;
+  const id =  req.params.id || req.params.profileId;
   const userId = req._user.id;
   
   const userCheck = await User.findById(userId)

@@ -74,6 +74,13 @@ const contentSchema = new Schema({
 
 contentSchema.index({ type: 1, status: 1 });
 
+contentSchema.virtual('genreList', {
+    ref: 'ContentGenre',
+    localField: '_id',
+    foreignField: 'contentId',
+    justOne: false
+});
+
 // ==========================================
 // Cascade Delete Middleware
 // ==========================================
@@ -86,5 +93,7 @@ contentSchema.pre('findOneAndDelete', async function() {
         await mongoose.model('ContentCast').deleteMany({ contentId }).session(session);
     }
 });
+
+
 
 module.exports = mongoose.model('Content', contentSchema);

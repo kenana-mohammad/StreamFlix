@@ -64,6 +64,12 @@ app.use(
     "/api/v1/admin/ratings",
     require("./modules/ratings/routes/adminRating.routes")
 );
+
+// recommendation
+app.use(
+    "/api/v1/recommendation",
+    require("./modules/recommendations/routes/recommendation.routes")
+)
 //genres
 app.use("/api/v1/genres", require("./modules/genres/index"));
 //section subscription routes

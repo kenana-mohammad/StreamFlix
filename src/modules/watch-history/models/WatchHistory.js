@@ -54,24 +54,34 @@ const watchHistorySchema = new Schema({
 /**
  * الفيلم: Profile + Content = سجل واحد
  */
-watchHistorySchema.index({
-    profileId: 1,
-    contentId: 1
-}, {
-    unique: true,
-    partialFilterExpression: { episodeId: null }
-});
+// watchHistorySchema.index({
+//     profileId: 1,
+//     contentId: 1
+// }, {
+//     unique: true,
+//     partialFilterExpression: { episodeId: null }
+// });
+
 
 /**
  * المسلسل: Profile + Content + Episode = سجل واحد
  */
+// watchHistorySchema.index({
+//     profileId: 1,
+//     contentId: 1,
+//     episodeId: 1
+// }, {
+//     unique: true,
+//     partialFilterExpression: { episodeId: { $ne: null } }
+// });
+
 watchHistorySchema.index({
     profileId: 1,
     contentId: 1,
     episodeId: 1
 }, {
     unique: true,
-    partialFilterExpression: { episodeId: { $ne: null } }
+    name: 'unique_profile_content_episode'
 });
 
 module.exports = mongoose.model('WatchHistory', watchHistorySchema);
