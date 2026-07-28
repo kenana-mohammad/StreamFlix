@@ -66,6 +66,19 @@ app.use('/api/v1/dashboard', require('./modules/dashboard/routes/dashboard.route
 app.use('/api/v1/dashboard/users', require('./modules/dashboard/routes/dashboard.users.route'));
 
 app.use('/api/v1/admin/subscriptions', require("./modules/subscriptions/routes/adminSubscription.routes"));
+
+// FAQs - Public Routes
+app.use(
+    '/api/v1/faqs',
+    require('./modules/faqs/index')
+);
+
+// FAQs - Super Admin Routes
+app.use(
+    '/api/v1/admin/faqs',
+    require('./modules/faqs/routes/adminfaq.routes')
+);
+
 app.use(notFound);
 app.use(errorHandler);
 
