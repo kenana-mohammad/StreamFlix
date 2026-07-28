@@ -69,18 +69,21 @@ const contentSchema = new Schema({
         required: false
     }
 }, {
-    timestamps: true
+    timestamps: true,
+     toJSON: { virtuals: true },   
+     toObject: { virtuals: true }
 });
 
-contentSchema.index({ type: 1, status: 1 });
-
-contentSchema.virtual('genreList', {
+contentSchema.virtual('genres', {
     ref: 'ContentGenre',
     localField: '_id',
     foreignField: 'contentId',
-    justOne: false
+    justOne: false,
+    populate: {
+        path: 'genreId',
+        select: 'name'
+    }
 });
-
 // ==========================================
 // Cascade Delete Middleware
 // ==========================================
