@@ -97,12 +97,12 @@ class RecommendationService {
             !watchedContent.includes(id.toString())
         );
             
-        // if there is no unwatched content in the favorite genres , return the top rated
+        // If there is no unwatched content in the favorite genres , return the top rated
         if (!unwatchedIds.length) {
             return await contentService.getTopRated();
         }
             
-        // fetch the recommendations after excluding the already watched content and sort it
+        // Fetch the recommendations after excluding the already watched content and sort it
             const recommendations = await Content.find({
                 _id: { $in: unwatchedIds },
                status: CONTENT_STATUS.PUBLISHED
