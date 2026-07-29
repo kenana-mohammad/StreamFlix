@@ -4,8 +4,7 @@ const router = express.Router();
 const asyncHandler = require("../../../utils/asyncHandler");
 const RecommendationController = require("../controllers/recommendation.controller");
 const auth = require("../../../middlewares/Auth");
-const validateProfileOwnership = require("../../../middlewares/validateProfileOwnership");
-const { getRecommendationsValidation } = require("../validations/recommendation.validation");
+const validateProfileToken = require("../../../middlewares/validateProfileToken");
 
 
 //for testing only
@@ -13,8 +12,8 @@ const { getRecommendationsValidation } = require("../validations/recommendation.
 //      [auth , validateProfileOwnership] ,
 //      asyncHandler(RecommendationController.getFavoriteGenres) )
 
-router.get("/profiles/:profileId/recommendations",
-     [ getRecommendationsValidation, auth, validateProfileOwnership ],
+router.get("/profiles/recommendations",
+     [ auth, validateProfileToken ],
       asyncHandler(RecommendationController.getPersonalizedRecommendation))
 
 

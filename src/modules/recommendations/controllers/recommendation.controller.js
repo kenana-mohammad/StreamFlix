@@ -6,7 +6,7 @@ const RecommendationService = require("../services/recommendation.services")
 class RecommendationController {
 
     getFavoriteGenres = async (req, res) => {
-      const profileId = req.params.profileId;
+const profileId = req.currentProfileId;
       if (!profileId) {
         throw new AppError("Profile Id is required" , 400)
       }
@@ -19,7 +19,7 @@ class RecommendationController {
    }
     
    getPersonalizedRecommendation = async (req, res) => {
-      const profileId = req.params.profileId;
+const profileId = req.currentProfileId;
        if (!profileId) {
         throw new AppError("Profile Id is required" , 400)
       }

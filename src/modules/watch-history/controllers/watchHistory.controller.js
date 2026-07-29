@@ -51,7 +51,7 @@ class WatchHistoryController {
     getHistory = async(req, res) => {
 
         const history = await watchHistoryService.getHistory(
-            req.currentProfileId._id
+            req.currentProfileId
         );
 
         return successResponse(
@@ -68,7 +68,7 @@ class WatchHistoryController {
         const { contentId } = req.params;
 
         const history = await watchHistoryService.getOne(
-            req.currentProfileId._id,
+            req.currentProfileId,
             contentId
         );
 
@@ -88,7 +88,7 @@ class WatchHistoryController {
         const { contentId } = req.params;
 
         const result = await watchHistoryService.deleteOne(
-            req.currentProfileId._id,
+            req.currentProfileId,
             contentId
         );
 
@@ -108,7 +108,7 @@ class WatchHistoryController {
     deleteAll = async(req, res) => {
 
         const result = await watchHistoryService.deleteAll(
-            req.currentProfileId._id
+            req.currentProfileId
         );
 
         return successResponse(

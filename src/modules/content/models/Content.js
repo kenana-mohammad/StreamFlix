@@ -75,6 +75,17 @@ const contentSchema = new Schema({
 contentSchema.index({ type: 1, status: 1 });
 
 // ==========================================
+
+contentSchema.virtual('genres', {
+    ref: 'ContentGenre',
+    localField: '_id',
+    foreignField: 'contentId',
+    justOne: false,
+    populate: {
+        path: 'genreId',
+        select: 'name'
+    }
+});
 // Cascade Delete Middleware
 // ==========================================
 contentSchema.pre('findOneAndDelete', async function() {

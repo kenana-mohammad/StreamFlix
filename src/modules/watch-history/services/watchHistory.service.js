@@ -627,5 +627,3 @@ class WatchHistoryService {
 
 module.exports =
     new WatchHistoryService();
-module.exports =
-    new WatchHistoryService();
