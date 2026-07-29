@@ -1,38 +1,16 @@
 const WatchlistService = require("../services/watchlist.service");
-const Profile = require("../../profiles/models/Profile");
 const { successResponse } = require("../../../shared/helpers/api-response.helper");
-const AppError = require("../../../shared/errors/AppError");
 
 class WatchlistController {
 
-    checkProfileOwnership = async (profileId, userId) => {
-        const profile = await Profile.findOne({
-            _id: profileId,
-            userId: userId
-        });
-
-        if (!profile) {
-            throw new AppError(
-                "Invalid profile or unauthorized",
-                403
-            );
-        }
-    };
-
-
+    /**
+     * POST /api/v1/profiles/watchlist
+     */
     add = async (req, res) => {
-        const { profileId } = req.params;
+        const profileId = req.currentProfileId; // من validateProfileToken
         const { contentId } = req.body;
 
-        await this.checkProfileOwnership(
-            profileId,
-            req._user.id
-        );
-
-        const watchlist = await WatchlistService.add(
-            profileId,
-            contentId
-        );
+        const watchlist = await WatchlistService.add(profileId, contentId);
 
         return successResponse(
             res,
@@ -43,18 +21,14 @@ class WatchlistController {
     };
 
 
+    /**
+     * DELETE /api/v1/profiles/watchlist/:contentId
+     */
     remove = async (req, res) => {
-        const { profileId, contentId } = req.params;
+        const profileId = req.currentProfileId;
+        const { contentId } = req.params;
 
-        await this.checkProfileOwnership(
-            profileId,
-            req._user.id
-        );
-
-        await WatchlistService.remove(
-            profileId,
-            contentId
-        );
+        await WatchlistService.remove(profileId, contentId);
 
         return successResponse(
             res,
@@ -64,17 +38,12 @@ class WatchlistController {
     };
 
 
+    /**     * GET /api/v1/profiles/watchlist
+     */
     getAll = async (req, res) => {
-        const { profileId } = req.params;
+        const profileId = req.currentProfileId;
 
-        await this.checkProfileOwnership(
-            profileId,
-            req._user.id
-        );
-
-        const watchlist = await WatchlistService.getAll(
-            profileId
-        );
+        const watchlist = await WatchlistService.getAll(profileId);
 
         return successResponse(
             res,

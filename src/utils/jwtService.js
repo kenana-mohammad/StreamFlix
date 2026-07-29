@@ -6,6 +6,7 @@ class JwtService {
             return jwt.sign(payload, process.env.JWT_SECRET_KEY, { expiresIn: '1 h' });
         }
         //============
+        // توكن الحساب الأساسي (User Login)
     genrateAccessToken = (payload) => {
         return jwt.sign(payload, process.env.JWT_SECRET_KEY, { expiresIn: '1 h' })
     }
@@ -19,7 +20,16 @@ class JwtService {
         return jwt.verify(token, process.env.JWT_SECRET_KEY);
     }
     verifyRefreshToken(token) {
-        return jwt.verify(token, process.env.REFRESH_JWT_SECRET_KEY);
+            return jwt.verify(token, process.env.REFRESH_JWT_SECRET_KEY);
+        }
+        //=======================================
+        // توكن البروفايل الخاص (Profile Token) — الإضافة الجديدة
+    generateProfileToken(payload) {
+        return jwt.sign(payload, process.env.PROFILE_JWT_SECRET, { expiresIn: '2h' });
+    }
+
+    verifyProfileToken(token) {
+        return jwt.verify(token, process.env.PROFILE_JWT_SECRET);
     }
 }
 module.exports = new JwtService();

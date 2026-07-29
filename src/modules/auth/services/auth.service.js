@@ -3,6 +3,7 @@ const {
 } = require("../../../shared/constants/user-status.constant");
 const jwtService = require("../../../utils/jwtService");
 const passwordService = require("../../../utils/passwordService");
+const Device = require("../../devices/models/Device");
 const Profile = require("../../profiles/models/Profile");
 const User = require("../../users/models/User");
 const useTransaction = process.env.USE_TRANSACTIONS === 'true';
@@ -154,6 +155,7 @@ class AuthService {
 
         user.password = await passwordService.hash(newPassword);
         await user.save();
+        await Device.deleteMany({ userId: userId });
     }
 }
 

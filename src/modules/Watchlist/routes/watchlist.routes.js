@@ -3,42 +3,45 @@ const router = express.Router();
 
 const WatchlistController = require("../controllers/watchlist.controller");
 const asyncHandler = require("../../../utils/asyncHandler");
-const auth = require("../../../middlewares/auth");
+const auth = require("../../../middlewares/Auth");
+const validateProfileToken = require("../../../middlewares/validateProfileToken");
 
 const {
-    addWatchlistValidation,
-    deleteWatchlistValidation
+    addWatchlistValidation
 } = require("../validations/watchlist.validation");
 
 
-// Add Content To Watchlist
+// ==========================================
+// Watchlist Routes (تحتاج profile token فقط - بدون اشتراك)
+// ==========================================
+
+// إضافة محتوى للقائمة
+// POST /api/v1/profiles/watchlist
 router.post(
-    "/:profileId/watchlist",
-    [
-        auth,
-        ...addWatchlistValidation
-    ],
+    "/watchlists",
+    auth,
+    validateProfileToken,
+    ...addWatchlistValidation,
     asyncHandler(WatchlistController.add)
 );
 
 
-// Remove Content From Watchlist
+// حذف محتوى من القائمة
+// DELETE /api/v1/profiles/watchlist/:contentId
 router.delete(
-    "/:profileId/watchlist/:contentId",
-    [
-        auth,
-        ...deleteWatchlistValidation
-    ],
+    "/watchlists/:contentId",
+    auth,
+    validateProfileToken,
     asyncHandler(WatchlistController.remove)
 );
 
 
-// Get Watchlist
+// عرض قائمة المشاهدة
+// GET /api/v1/profiles/watchlist
 router.get(
-    "/:profileId/watchlist",
-    [
-        auth
-    ],
+    "/watchlists",
+    auth,
+    validateProfileToken,
     asyncHandler(WatchlistController.getAll)
 );
 

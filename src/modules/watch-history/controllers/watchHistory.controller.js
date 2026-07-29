@@ -28,7 +28,7 @@ class WatchHistoryController {
         const history = await watchHistoryService.saveProgress({
             userId: req._user.id,
             subscription: req.subscription,
-            profileId: req.activeProfile._id,
+         profileId :req.currentProfileId,
             contentId,
             episodeId: episodeId || null,
             progressTime,
@@ -51,7 +51,7 @@ class WatchHistoryController {
     getHistory = async(req, res) => {
 
         const history = await watchHistoryService.getHistory(
-            req.activeProfile._id
+            req.currentProfileId._id
         );
 
         return successResponse(
@@ -68,7 +68,7 @@ class WatchHistoryController {
         const { contentId } = req.params;
 
         const history = await watchHistoryService.getOne(
-            req.activeProfile._id,
+            req.currentProfileId._id,
             contentId
         );
 
@@ -88,7 +88,7 @@ class WatchHistoryController {
         const { contentId } = req.params;
 
         const result = await watchHistoryService.deleteOne(
-            req.activeProfile._id,
+            req.currentProfileId._id,
             contentId
         );
 
@@ -108,7 +108,7 @@ class WatchHistoryController {
     deleteAll = async(req, res) => {
 
         const result = await watchHistoryService.deleteAll(
-            req.activeProfile._id
+            req.currentProfileId._id
         );
 
         return successResponse(
@@ -119,6 +119,5 @@ class WatchHistoryController {
     };
 }
 
-module.exports = new WatchHistoryController();
 
 module.exports = new WatchHistoryController();

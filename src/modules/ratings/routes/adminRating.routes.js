@@ -1,12 +1,13 @@
 const express = require("express");
 const router = express.Router();
 
-const auth = require("../../../middlewares/auth");
-const role = require("../../../middlewares/role");
+
 const asyncHandler = require("../../../utils/asyncHandler");
 
 const ratingController = require("../controllers/rating.controller");
 const { ROLES } = require("../../../shared/constants/roles.constant");
+const role = require("../../../middlewares/Role");
+const auth = require("../../../middlewares/Auth");
 
 // =========================
 // Recent Ratings

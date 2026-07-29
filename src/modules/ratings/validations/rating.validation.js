@@ -3,12 +3,7 @@ const validate = require("../../../middlewares/validate");
 
 const createRatingValidation = [
 
-    param("profileId")
-        .notEmpty()
-        .withMessage("Profile id is required")
-        .isMongoId()
-        .withMessage("Invalid profile id"),
-
+   
     param("contentId")
         .notEmpty()
         .withMessage("Content id is required")

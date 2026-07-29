@@ -3,76 +3,42 @@ const { successResponse } = require("../../../shared/helpers/api-response.helper
 
 class RatingController {
 
-    create = async (req, res) => {
-
-        console.log("CREATE RATING HIT");
-
+    /**
+     * إضافة أو تحديث تقييم (ذكي - يتحقق إذا التقييم موجود)
+     * POST /api/v1/ratings/:contentId
+     */
+    createOrUpdate = async (req, res) => {
         const { rating, review } = req.body;
-
-        const { profileId, contentId } = req.params;
-
+        const { contentId } = req.params;
+        const profileId = req.currentProfileId; // من الـ validateProfileToken middleware
 
         const ratingData = {
-            userId: req._user.id,
             profileId,
             contentId,
             rating,
             review
         };
 
-
-        const ratingObj = await ratingService.create(ratingData);
-
+        const result = await ratingService.createOrUpdate(ratingData);
 
         return successResponse(
             res,
-            201,
-            "Rating saved successfully",
-            ratingObj
+            result.isNew ? 201 : 200,
+            result.isNew ? "Rating added successfully" : "Rating updated successfully",
+            result.rating
         );
     };
 
 
-
-    update = async (req, res) => {
-
-        const { rating, review } = req.body;
-
-        const { profileId, contentId } = req.params;
-
-
-        const ratingData = {
-            userId: req._user.id,
-            profileId,
-            contentId,
-            rating,
-            review
-        };
-
-
-        const ratingObj = await ratingService.update(ratingData);
-
-
-        return successResponse(
-            res,
-            200,
-            "Rating updated successfully",
-            ratingObj
-        );
-    };
-
-
-
+    /**
+     * عرض تقييم البروفايل الحالي لمحتوى معين
+     * GET /api/v1/ratings/:contentId/my-rating
+     */
     getMyRating = async (req, res) => {
+        const { contentId } = req.params;
+        const profileId = req.currentProfileId;
 
-        console.log("GET MY RATING HIT");
-
-
-        const rating = await ratingService.getMyRating(
-            req._user.id,
-            req.params.contentId
-        );
-
+        const rating = await ratingService.getMyRating(profileId, contentId);
 
         return successResponse(
             res,
@@ -83,45 +49,48 @@ class RatingController {
     };
 
 
-
+    /**
+     * عرض جميع تقييمات البروفايل الحالي
+     * GET /api/v1/ratings/my-ratings
+     */
     getMyRatings = async (req, res) => {
+        const profileId = req.currentProfileId;
 
-        const ratings = await ratingService.getMyRatings(
-            req._user.id
-        );
-
+        const ratings = await ratingService.getMyRatings(profileId);
 
         return successResponse(
             res,
             200,
-            "Ratings fetched successfully",
+            "Your ratings fetched successfully",
             ratings
         );
     };
 
 
+    /**
+     * عرض جميع التقييمات لمحتوى معين + الإحصائيات
+     * GET /api/v1/ratings/:contentId/all
+     */
+    getContentRatings = async (req, res) => {
+        const { contentId } = req.params;
 
-    getContentRating = async (req, res) => {
-
-        const ratings = await ratingService.getContentRating(
-            req.params.contentId
-        );
-
+        const result = await ratingService.getContentRatings(contentId);
 
         return successResponse(
             res,
             200,
             "Content ratings fetched successfully",
-            ratings
+            result
         );
     };
 
 
+    // ========================================
+    // Admin routes (موجودة في adminRating.routes.js)
+    // ========================================
 
     getRecentRatings = async (req, res) => {
-
         const ratings = await ratingService.getRecentRatings();
-
 
         return successResponse(
             res,
@@ -132,13 +101,8 @@ class RatingController {
     };
 
 
-
     deleteRating = async (req, res) => {
-
-        await ratingService.deleteRating(
-            req.params.id
-        );
-
+        await ratingService.deleteRating(req.params.id);
 
         return successResponse(
             res,

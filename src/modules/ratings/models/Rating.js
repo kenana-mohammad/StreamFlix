@@ -29,4 +29,6 @@ const ratingSchema = new Schema({
     timestamps: true
 });
 
+ratingSchema.index({ profileId: 1, contentId: 1 }, { unique: true });
+
 module.exports = mongoose.model('Rating', ratingSchema);

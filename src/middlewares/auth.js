@@ -17,9 +17,7 @@ const auth = async(req, res, next) => {
         req._user = {
             ...decoded
         }
-        console.log(req._user = {
-            ...decoded
-        })
+       
         const device = await Device.findOne({
             userId: decoded.id,
             deviceId: decoded.deviceId
@@ -35,7 +33,6 @@ const auth = async(req, res, next) => {
             });
 
         }
-        console.log(decoded)
 
         next()
 

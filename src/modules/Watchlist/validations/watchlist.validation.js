@@ -4,12 +4,7 @@ const validate = require("../../../middlewares/validate");
 
 const addWatchlistValidation = [
 
-    param("profileId")
-        .notEmpty()
-        .withMessage("Profile id is required")
-        .isMongoId()
-        .withMessage("Invalid profile id"),
-
+  
 
     body("contentId")
         .notEmpty()

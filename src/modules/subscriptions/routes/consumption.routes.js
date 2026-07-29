@@ -1,7 +1,6 @@
 const express = require('express');
 const { checkActiveSubscription } = require('../../../middlewares/checkActiveSubscription');
 const auth = require('../../../middlewares/Auth');
-const validateActiveProfile = require('../../../middlewares/validateActiveProfile');
 const asyncHandler = require('../../../utils/asyncHandler');
 const consumptionController = require('../controllers/consumption.controller');
 

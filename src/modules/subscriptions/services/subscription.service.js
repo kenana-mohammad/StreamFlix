@@ -71,66 +71,69 @@ class SubscriptionService {
         }
         /////////====================================
     async renewManual(data) {
-            const { subscriptionId, userId, paymentMethod, currency, autoRenew } = data;
+        const { subscriptionId, userId, paymentMethod, currency, autoRenew } = data;
 
-            const session = useTransaction ? await mongoose.startSession() : null;
-            if (session) session.startTransaction();
+        const session = useTransaction ? await mongoose.startSession() : null;
+        if (session) session.startTransaction();
 
-            try {
-                const existingSub = await Subscription.findOne({ _id: subscriptionId, userId }).session(session);
-                if (!existingSub) throw new Error("الاشتراك غير موجود");
+        try {
+            const existingSub = await Subscription.findOne({ _id: subscriptionId, userId }).session(session);
+            if (!existingSub) throw new Error("الاشتراك غير موجود");
 
-                const subscriptionPlan = await Plan.findById(existingSub.planId);
-                if (!subscriptionPlan) throw new Error("الخطة غير موجودة");
+            const subscriptionPlan = await Plan.findById(existingSub.planId);
+            if (!subscriptionPlan) throw new Error("الخطة غير موجودة");
 
-                const todayStr = new Date().toISOString().split('T')[0];
-                const endStr = new Date(existingSub.endDate).toISOString().split('T')[0];
-                const today = new Date(todayStr);
-                const end = new Date(endStr);
+            const todayStr = new Date().toISOString().split('T')[0];
+            const endStr = new Date(existingSub.endDate).toISOString().split('T')[0];
+            const today = new Date(todayStr);
+            const end = new Date(endStr);
 
-                const diffInTime = end.getTime() - today.getTime();
-                const diffInDays = Math.round(diffInTime / (1000 * 3600 * 24));
-                const startDateForNewPeriod = (diffInDays >= 0) ? new Date(existingSub.endDate) : new Date();
+            const diffInTime = end.getTime() - today.getTime();
+            const diffInDays = Math.round(diffInTime / (1000 * 3600 * 24));
 
-                const newEndDate = new Date(startDateForNewPeriod);
-                newEndDate.setDate(newEndDate.getDate() + Number(subscriptionPlan.duration));
+            // 💡 التعديل هنا: إذا كان الاشتراك ملغياً أو منتهياً أو انتهت أيامه، يبدأ من اليوم حصراً
+            const isCancelledOrExpired = existingSub.status === "cancelled" || existingSub.status === "expired" || diffInDays < 0;
+            const startDateForNewPeriod = isCancelledOrExpired ? new Date() : new Date(existingSub.endDate);
 
-                existingSub.startDate = startDateForNewPeriod;
-                existingSub.endDate = newEndDate;
-                existingSub.status = "active";
-                existingSub.autoRenew = autoRenew !== undefined ? autoRenew : existingSub.autoRenew;
-                await existingSub.save({ session });
+            const newEndDate = new Date(startDateForNewPeriod);
+            newEndDate.setDate(newEndDate.getDate() + Number(subscriptionPlan.duration));
 
-                const payment = await Payment.create([{
-                    userId: userId,
-                    subscriptionId: existingSub._id,
-                    planId: subscriptionPlan._id,
-                    amount: subscriptionPlan.price,
-                    currency: currency || "USD",
-                    paymentMethod: paymentMethod || "CreditCard",
-                    status: "completed",
-                    transactionId: `RENEWAL_${Date.now()}`
-                }], { session });
+            existingSub.startDate = startDateForNewPeriod;
+            existingSub.endDate = newEndDate;
+            existingSub.status = "active";
+            existingSub.autoRenew = autoRenew !== undefined ? autoRenew : existingSub.autoRenew;
+            await existingSub.save({ session });
 
-                if (session) await session.commitTransaction();
+            const payment = await Payment.create([{
+                userId: userId,
+                subscriptionId: existingSub._id,
+                planId: subscriptionPlan._id,
+                amount: subscriptionPlan.price,
+                currency: currency || "USD",
+                paymentMethod: paymentMethod || "CreditCard",
+                status: "completed",
+                transactionId: `RENEWAL_${Date.now()}`
+            }], { session });
 
-                const populatedPayment = await Payment.findById(payment[0]._id)
-                    .populate('userId', 'name email')
-                    .populate('subscriptionId');
+            if (session) await session.commitTransaction();
 
-                return {
-                    subscription: {
-                        payment: populatedPayment
-                    }
-                };
+            const populatedPayment = await Payment.findById(payment[0]._id)
+                .populate('userId', 'name email')
+                .populate('subscriptionId');
 
-            } catch (error) {
-                if (session) await session.abortTransaction();
-                throw error;
-            } finally {
-                if (session) session.endSession();
-            }
+            return {
+                subscription: {
+                    payment: populatedPayment
+                }
+            };
+
+        } catch (error) {
+            if (session) await session.abortTransaction();
+            throw error;
+        } finally {
+            if (session) session.endSession();
         }
+    }
         //////===================================================================================
 
     // cancelSubscription

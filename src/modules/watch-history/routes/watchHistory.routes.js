@@ -1,9 +1,9 @@
 const express = require('express');
 const { checkActiveSubscription } = require('../../../middlewares/checkActiveSubscription');
 const auth = require('../../../middlewares/Auth');
-const validateActiveProfile = require("./../../../middlewares/validateActiveProfile");
 const asyncHandler = require('../../../utils/asyncHandler');
 const watchHistoryController = require('../controllers/watchHistory.controller');
+const validateProfileToken = require('../../../middlewares/validateProfileToken');
 const router = express.Router();
 
 
@@ -13,7 +13,7 @@ router.post(
     [
         auth,
         checkActiveSubscription,
-        validateActiveProfile
+        validateProfileToken
     ],
 
     asyncHandler(
@@ -27,7 +27,7 @@ router.get(
 
     [
         auth,
-        validateActiveProfile
+        validateProfileToken
     ],
 
     asyncHandler(
@@ -37,7 +37,7 @@ router.get(
 router.get(
     '/history/:contentId', [
         auth,
-        validateActiveProfile
+        validateProfileToken
     ],
     asyncHandler(
         watchHistoryController.getOne
@@ -49,7 +49,7 @@ router.delete(
 
     [
         auth,
-        validateActiveProfile
+        validateProfileToken
     ],
 
     asyncHandler(
@@ -63,7 +63,7 @@ router.delete(
 
     [
         auth,
-        validateActiveProfile
+        validateProfileToken
     ],
 
     asyncHandler(
