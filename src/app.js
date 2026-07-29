@@ -71,6 +71,10 @@ app.use(
 )
 //genres
 app.use("/api/v1/genres", require("./modules/genres/index"));
+//favorites
+app.use("/api/v1/profiles", require("./modules/favorites/routes/favorite.routes"));
+//home 
+app.use("/api/v1/home", require("./modules/home/routes/home.routes"));
 //section subscription routes
 app.use('/api/v1/subscriptions', subscriptionsModuleRoutes);
 app.use('/api/v1/watch', require("./modules/watch-history/routes/watchHistory.routes"));
