@@ -4,8 +4,8 @@ const { successResponse } = require("../../../shared/helpers/api-response.helper
 class HomeController {
 
     getHome = async (req, res) => {
-
-        const data = await homeService.getHomeData();
+        const profileId = req.params.id
+        const data = await homeService.getHomeData(profileId);
 
         return successResponse(
             res,
@@ -14,6 +14,8 @@ class HomeController {
             data
         );
     };
+
+
 
 }
 

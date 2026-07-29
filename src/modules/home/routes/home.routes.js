@@ -4,9 +4,12 @@ const homeController = require("../controllers/home.controller");
 const asyncHandler = require("../../../utils/asyncHandler");
 
 
+
 const router = express.Router();
 
-router.get("/", asyncHandler(homeController.getHome));
+router.get("/:id", asyncHandler(homeController.getHome));
+
+
 
 
 module.exports = router;
