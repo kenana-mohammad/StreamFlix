@@ -51,7 +51,8 @@ app.use('/api/v1/users/profiles', require("./modules/profiles/routes/profile.rou
 app.use('/api/v1/cast', require('./modules/casts/routes/cast.routes'));
 //plans
 app.use("/api/v1/plans", require("./modules/plans/index"));
-
+//upload
+app.use("/api/v1/admin/upload", require("./modules/upload/routes/upload.routes"));
 //ratings
 app.use("/api/v1/ratings", require("./modules/ratings/index"));
 //watchlist
