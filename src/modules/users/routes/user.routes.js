@@ -5,10 +5,11 @@ const {
     updateProfileValidate
 } = require('../validations/updateProfileValidate');
 const auth = require('../../../middlewares/Auth');
+const validatePrimaryProfile = require('../../../middlewares/validatePrimaryProfile');
 
 const router = express.Router();
 //profile
-router.get('/get-my-profile', [auth], asyncHandler(userController.getMyProfile));
-router.put('/update-my-profile', [auth, ...updateProfileValidate], asyncHandler(userController.updateMyProfile));
+router.get('/get-my-profile', [auth,validatePrimaryProfile], asyncHandler(userController.getMyProfile));
+router.put('/update-my-profile', [auth, validatePrimaryProfile,...updateProfileValidate], asyncHandler(userController.updateMyProfile));
 
 module.exports = router;

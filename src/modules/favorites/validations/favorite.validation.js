@@ -1,19 +1,18 @@
-const { param } = require("express-validator");
+const { param, body } = require("express-validator");
 const validate = require("../../../middlewares/validate");
-
 const addFavoriteValidation = [
-    param("profileId")
-        .isMongoId()
-        .withMessage("Invalid profile id"),
-
-    validate,
+    body('contentId')
+        .notEmpty()
+        .withMessage('Content ID is required')
+        .custom((value) => {
+            if (!mongoose.Types.ObjectId.isValid(value)) {
+                throw new Error('Invalid content ID format');
+            }
+            return true;
+        }),
 ];
-
 const removeFavoriteValidation = [
-    param("profileId")
-        .isMongoId()
-        .withMessage("Invalid profile id"),
-
+   
     param("contentId")
         .isMongoId()
         .withMessage("Invalid content id"),
@@ -21,16 +20,8 @@ const removeFavoriteValidation = [
     validate,
 ];
 
-const getFavoritesValidation = [
-    param("profileId")
-        .isMongoId()
-        .withMessage("Invalid profile id"),
-
-    validate,
-];
 
 module.exports = {
     addFavoriteValidation,
-    removeFavoriteValidation,
-    getFavoritesValidation,
+    removeFavoriteValidation
 };

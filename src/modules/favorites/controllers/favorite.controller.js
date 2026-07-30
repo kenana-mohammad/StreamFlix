@@ -8,13 +8,11 @@ class FavoriteController {
     // ---------------------------------------------
     addFavorite = async (req, res) => {
 
-        const { profileId } = req.params;
+          const profileId = req.currentProfileId; 
         const { contentId } = req.body;
-
         const data = await favoriteService.addFavorite(
             profileId,
-            contentId,
-            req._user.id
+            contentId
         );
 
         return successResponse(
@@ -30,19 +28,19 @@ class FavoriteController {
     // ---------------------------------------------
     removeFavorite = async (req, res) => {
 
-        const { profileId, contentId } = req.params;
+        const {contentId } = req.params;
+          const profileId = req.currentProfileId; 
 
         const data = await favoriteService.removeFavorite(
             profileId,
-            contentId,
-            req._user.id
+            contentId
         );
 
         return successResponse(
             res,
             200,
-            "Content removed from favorites successfully",
-            data
+            "Content removed from favorites successfully"
+            
         );
     };
 
@@ -51,11 +49,10 @@ class FavoriteController {
     // -------------------------------------------
     getFavorites = async (req, res) => {
 
-        const { profileId } = req.params;
+          const profileId = req.currentProfileId; 
 
         const data = await favoriteService.getFavorites(
             profileId,
-            req._user.id
         );
 
         return successResponse(

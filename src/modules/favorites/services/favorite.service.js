@@ -31,9 +31,7 @@ class FavoriteService {
     //------------------------------------------------------
     // Add Favorite
     // ------------------------------------------------------
-    addFavorite = async (profileId, contentId, userId) => {
-
-        await this.checkProfileOwnership(profileId, userId);
+   addFavorite = async (profileId, contentId) => {
 
         const content = await Content.findById(contentId);
 
@@ -57,14 +55,14 @@ class FavoriteService {
             profileId,
             contentId,
         });
-    };
-
+    
+}
     //------------------------------------------------------
     // Remove Favorite
     //------------------------------------------------------
-    removeFavorite = async (profileId, contentId, userId) => {
+    removeFavorite = async (profileId, contentId) => {
 
-        await this.checkProfileOwnership(profileId, userId);
+        // await this.checkProfileOwnership(profileId, userId);
 
         const favorite = await Favorite.findOneAndDelete({
             profileId,
@@ -81,16 +79,16 @@ class FavoriteService {
     //------------------------------------------------------
     // Get Favorites
     //------------------------------------------------------
-    getFavorites = async (profileId, userId) => {
+    getFavorites = async (profileId) => {
 
-        await this.checkProfileOwnership(profileId, userId);
+        // await this.checkProfileOwnership(profileId, userId);
 
         return await Favorite.find({ profileId })
             .populate("contentId", "title description poster type averageRating releaseYear")
             .sort({ createdAt: -1 });
 
     };
-
 }
+
 
 module.exports = new FavoriteService();

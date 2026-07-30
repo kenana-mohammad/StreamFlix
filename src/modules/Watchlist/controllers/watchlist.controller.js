@@ -9,7 +9,6 @@ class WatchlistController {
     add = async (req, res) => {
         const profileId = req.currentProfileId; // من validateProfileToken
         const { contentId } = req.body;
-
         const watchlist = await WatchlistService.add(profileId, contentId);
 
         return successResponse(

@@ -1,15 +1,19 @@
 const Content = require("../../content/models/Content");
 const { CONTENT_TYPE } = require("../../../shared/constants/content-type.constant");
 const { CONTENT_STATUS } = require("../../../shared/constants/content-status.constant");
+const recommendationServices = require("../../recommendations/services/recommendation.services");
+
 
 class HomeService {
 
-    getHomeData = async () => {
+    getHomeData = async (profileId , limit) => {
 
         const [
             latestMovies,
             latestSeries,
             topRated,
+            smartRecommendation
+            
         ] = await Promise.all([
 
             Content.find({
@@ -38,14 +42,19 @@ class HomeService {
                 })
                 .limit(10),
 
+             recommendationServices.getRecommendations(profileId, limit )
+
         ]);
 
         return {
             latestMovies,
             latestSeries,
             topRated,
+            smartRecommendation
         };
     };
+
+
 }
 
 module.exports = new HomeService();

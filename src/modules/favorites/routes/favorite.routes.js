@@ -4,25 +4,22 @@ const favoriteController = require("../controllers/favorite.controller");
 
 const asyncHandler = require("../../../utils/asyncHandler");
 
-const auth = require("../../../middlewares/auth");
-const role = require("../../../middlewares/role");
+const auth = require("../../../middlewares/Auth");
 
-const { ROLES } = require("../../../shared/constants/roles.constant");
 
 const {
     addFavoriteValidation,
     removeFavoriteValidation,
-    getFavoritesValidation
 } = require("../validations/favorite.validation");
+const validateProfileToken = require("../../../middlewares/validateProfileToken");
 
 // ------------------------------------------
 // Add Favorite
 // ------------------------------------------
 router.post(
-    "/:profileId/favorites",
-    addFavoriteValidation,
-    auth,
-    role([ROLES.USER]),
+    "/favorites",
+        auth,validateProfileToken,
+addFavoriteValidation,
     asyncHandler(favoriteController.addFavorite)
 );
 
@@ -30,10 +27,9 @@ router.post(
 // Remove Favorite
 // ------------------------------------------
 router.delete(
-    "/:profileId/favorites/:contentId",
+    "/favorites/:contentId",
     removeFavoriteValidation,
-    auth,
-    role([ROLES.USER]),
+    auth,validateProfileToken,
     asyncHandler(favoriteController.removeFavorite)
 );
 
@@ -41,10 +37,8 @@ router.delete(
 // Get Favorites
 // -------------------------------------------
 router.get(
-    "/:profileId/favorites",
-    getFavoritesValidation,
-    auth,
-    role([ROLES.USER]),
+    "/favorites",
+    auth,validateProfileToken,
     asyncHandler(favoriteController.getFavorites)
 );
 
