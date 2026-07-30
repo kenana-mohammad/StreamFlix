@@ -43,7 +43,7 @@ class UploadController {
 
     generateSignature = async (req, res) => {
 
-    const folder = req.body; 
+    const { folder } = req.body; 
     const data = await uploadService.generateSignature(folder);
 
     return successResponse(
