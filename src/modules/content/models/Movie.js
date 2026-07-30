@@ -9,9 +9,8 @@ const movieSchema = new Schema({
         unique: true
     },
     duration: {
-        type: Number,
-        required: true,
-        min: 1
+        type: String,
+        default: null
     },
     videoUrl: {
         type: String,

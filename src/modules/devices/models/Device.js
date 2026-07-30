@@ -16,6 +16,11 @@ const deviceSchema = new Schema({
         type: String,
         required: true
     },
+    deviceId: {
+        type: String,
+        required: true,
+        index: true
+    },
     deviceType: {
         type: String,
         enum: {
@@ -30,7 +35,7 @@ const deviceSchema = new Schema({
     lastActive: {
         type: Date,
         default: Date.now
-    } 
+    }
 }, {
     timestamps: true
 });

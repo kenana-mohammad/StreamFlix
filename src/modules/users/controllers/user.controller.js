@@ -1,6 +1,10 @@
 const asyncHandler = require('../../../utils/asyncHandler');
-const { successResponse, errorResponse } = require('../../../shared/helpers/api-response.helper');
+const {
+    successResponse,
+    errorResponse
+} = require('../../../shared/helpers/api-response.helper');
 const userService = require('../services/user.service');
+const User = require('../models/User');
 
 class UserController {
     getAll = asyncHandler(async (req, res) => {
@@ -13,29 +17,36 @@ class UserController {
         return successResponse(res, 200, 'تم جلب المستخدم', user);
     });
 
-    create = asyncHandler(async (req, res) => {
-        const user = await userService.create(req.body);
-        return successResponse(res, 201, 'تم إنشاء المستخدم', user);
-    });
 
-    update = asyncHandler(async (req, res) => {
-        const user = await userService.update(req.params.id, req.body);
-        return successResponse(res, 200, 'تم تحديث المستخدم', user);
-    });
 
-    remove = asyncHandler(async (req, res) => {
-        await userService.remove(req.params.id);
-        return successResponse(res, 200, 'تم حذف المستخدم');
-    });
+    //==============================
+    //profile 
+    getMyProfile = async (req, res) => {
+        const userId = req._user.id;
 
-    // فشل متوقع داخل Controller → errorResponse مباشرة
-    exampleManualError = asyncHandler(async (req, res) => {
-        if (!req.body.email) {
-            return errorResponse(res, 400, 'البريد الإلكتروني مطلوب');
-        }
+        const user = await userService.getMyProfile(userId);
+        return successResponse(res, 200, 'عرض الملف الشخصي', user);
 
-        return successResponse(res, 200, 'البيانات صحيحة');
-    });
+
+    }
+    //===============
+    updateMyProfile = async (req, res) => {
+
+        const userId = req._user.id;
+
+        const {
+            name,
+            phone
+        } = req.body;
+
+        const user = await userService.updateMyProfile(userId, name,
+            phone);
+
+        return successResponse(res, 201, 'تم تحديث البيانات بنجاح', user);
+
+
+
+    };
 }
 
 module.exports = new UserController();

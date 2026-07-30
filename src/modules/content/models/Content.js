@@ -18,7 +18,7 @@ const contentSchema = new Schema({
         type: String,
         enum: {
             values: Object.values(CONTENT_TYPE),
-            message: 'نوع المحتوى غير صالح'
+            message: 'Content type is invalid'
         },
         required: true
     },
@@ -30,7 +30,7 @@ const contentSchema = new Schema({
         type: String,
         enum: {
             values: Object.values(AGE_RATING),
-            message: 'تصنيف العمر غير صالح'
+            message: 'Age rating is invalid'
         },
         required: true
     },
@@ -61,12 +61,41 @@ const contentSchema = new Schema({
         type: String,
         enum: {
             values: Object.values(CONTENT_STATUS),
-            message: 'حالة المحتوى غير صالحة'
+            message: 'Content status is invalid'
         },
-        default: CONTENT_STATUS.DRAFT
+    },
+    publishAt: {
+        type: Date,
+        required: false
     }
 }, {
     timestamps: true
+});
+
+contentSchema.index({ type: 1, status: 1 });
+
+// ==========================================
+
+contentSchema.virtual('genres', {
+    ref: 'ContentGenre',
+    localField: '_id',
+    foreignField: 'contentId',
+    justOne: false,
+    populate: {
+        path: 'genreId',
+        select: 'name'
+    }
+});
+// Cascade Delete Middleware
+// ==========================================
+contentSchema.pre('findOneAndDelete', async function() {
+    const contentId = this.getQuery()['_id'];
+    const session = this.getOptions().session; 
+
+    if (contentId) {
+        await mongoose.model('ContentGenre').deleteMany({ contentId }).session(session);
+        await mongoose.model('ContentCast').deleteMany({ contentId }).session(session);
+    }
 });
 
 module.exports = mongoose.model('Content', contentSchema);

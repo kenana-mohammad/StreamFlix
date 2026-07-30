@@ -16,4 +16,9 @@ const favoriteSchema = new Schema({
     timestamps: { createdAt: true, updatedAt: false }
 });
 
+//prevent duplicates
+favoriteSchema.index(
+    { profileId: 1, contentId: 1 }, 
+    { unique: true });
+
 module.exports = mongoose.model('Favorite', favoriteSchema);

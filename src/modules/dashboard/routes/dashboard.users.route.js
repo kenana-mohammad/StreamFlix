@@ -5,22 +5,24 @@ const role = require("../../../middlewares/role");
 const asyncHandler = require("../../../utils/asyncHandler");
 const { userIdValidation } = require("../validations/dashboard.users.validation");
 const auth = require("../../../middlewares/auth");
-const { SUPER_ADMIN } = require("../../../shared/constants/roles.constant");
+const { ROLES } = require("../../../shared/constants/roles.constant");
 
-router.get("/search",
-     [auth, role(SUPER_ADMIN)], 
-    asyncHandler(DashboardUsersController.searchUser));
+router.get("/",
+    [auth, role(ROLES.SUPER_ADMIN)], 
+    asyncHandler(DashboardUsersController.getUsers));
+router.post("/create/content-manager", [auth, role(ROLES.SUPER_ADMIN)],
+    asyncHandler(DashboardUsersController.createContentManager));
 
-router.get("/:id",
-     [auth, userIdValidation, role(SUPER_ADMIN)],
+router.get("/:id", [userIdValidation,
+          auth, role(ROLES.SUPER_ADMIN)
+    ],
     asyncHandler(DashboardUsersController.getUserInfo));
 
-router.put("/enable/:id",
-     [auth, userIdValidation, role(SUPER_ADMIN)],
-     asyncHandler(DashboardUsersController.enableAccount));
+router.put("/update-status/:id", [userIdValidation,auth,
+           role(ROLES.SUPER_ADMIN),
+    ],
+    asyncHandler(DashboardUsersController.updateAccountStatus));
 
-router.put("/disable/:id",
-     [auth, userIdValidation, role(SUPER_ADMIN)],
-     asyncHandler(DashboardUsersController.disableAccount));
+
 
 module.exports = router;

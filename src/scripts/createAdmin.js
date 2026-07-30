@@ -14,7 +14,7 @@ const createSeedUsers = async () => {
             email: process.env.SUPER_ADMIN_EMAIL || 'superadmin@example.com',
             password: process.env.SUPER_ADMIN_PASSWORD || 'SuperAdmin123!',
             phone: process.env.SUPER_ADMIN_PHONE || '0500000000',
-            role: ROLES.SUPER_ADMIN,
+            role: ROLES.SUPER_ADMIN||"super_admin'",
             status: USER_STATUS.ACTIVE
         },
         {

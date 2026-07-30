@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { USER_STATUS } = require('../../../shared/constants/user-status.constant');
 const {
     Schema
 } = mongoose;
@@ -17,7 +18,7 @@ const profileSchema = new Schema({
         type: String
     },
     pin: {
-        type: String,
+        type: String
     },
     isKids: {
         type: Boolean,
@@ -26,9 +27,35 @@ const profileSchema = new Schema({
     minAge: {
         type: Number,
         default: 18
+    },
+    primaryProfile: {
+        type: Boolean,
+        default: false
+    },
+    status: {
+        type: String,
+        enum: {
+            values: Object.values(USER_STATUS),
+            message: "Unaccepted Value"
+        },
+        default: USER_STATUS.ACTIVE
     }
 }, {
-    timestamps: true
+    timestamps: true,
+   toJSON: { virtuals: true }, 
+    toObject: { virtuals: true }
+});
+
+profileSchema.virtual('isPinProtected').get(function() {
+    return !!this.pin;
+});
+
+
+profileSchema.index({ userId: 1 });
+
+profileSchema.index({ userId: 1, primaryProfile: 1 }, {
+    unique: true,
+    partialFilterExpression: { primaryProfile: true }
 });
 
 module.exports = mongoose.model('Profile', profileSchema);
