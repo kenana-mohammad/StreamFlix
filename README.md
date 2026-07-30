@@ -155,6 +155,12 @@ npm run dev
 ```bash
 npm  run  seed:admin
 ```
+
+### 📮 API Testing
+
+You can test all available API endpoints using the Postman collection:
+
+[Open Postman Collection](https://documenter.getpostman.com/view/30469576/2sBY4SNzD2)
   
 Health check:
 
