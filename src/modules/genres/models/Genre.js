@@ -10,10 +10,21 @@ const genreSchema = new Schema({
     },
     description: {
         type: String,
-         trim: true,
+        trim: true,
     }
 }, {
     timestamps: true
+});
+
+// ==========================================
+// Cascade Delete Middleware
+// ==========================================
+genreSchema.pre('findOneAndDelete', async function() {
+    const genreId = this.getQuery()['_id'];
+    
+    if (genreId) {
+        await mongoose.model('ContentGenre').deleteMany({ genreId: genreId });
+    }
 });
 
 module.exports = mongoose.model('Genre', genreSchema);

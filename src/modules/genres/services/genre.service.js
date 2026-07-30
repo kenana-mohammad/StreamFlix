@@ -91,8 +91,8 @@ class GenreService {
             throw new AppError("Genre not found", 404);
         }
 
-        await genre.deleteOne();
-
+        await Genre.findByIdAndDelete(id);
+        
         return true;
     };
 

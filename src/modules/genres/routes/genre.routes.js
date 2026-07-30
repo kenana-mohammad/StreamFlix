@@ -66,7 +66,7 @@ router.put(
     "/:id", [
         auth,
         role([ROLES.SUPER_ADMIN, ROLES.CONTENT_MANAGER]),
-        // ...updateGenreValidation,
+        ...updateGenreValidation,
     ],
     asyncHandler(genreController.update)
 );

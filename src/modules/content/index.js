@@ -14,6 +14,10 @@ router.use('/movies', movieRoutes);
 router.use('/series', seriesRoutes);
 router.use('/seasons', seasonRoutes);
 router.use('/episodes', episodeRoutes);
+
+router.use('/episodes', episodeRoutes);
+
+
 router.use('/', relationRoutes);
 
 module.exports = router;

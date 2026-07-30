@@ -3,8 +3,8 @@ const { successResponse } = require('../../../shared/helpers/api-response.helper
 
 class SeriesController {
     create = async(req, res) => {
-        const { title, description, poster, ageRating, trailerUrl, releaseYear, status, publishAt, totalSeasons } = req.body;
-        const data = { title, description, poster, ageRating, trailerUrl, releaseYear, status, publishAt, totalSeasons };
+        const { title, description, poster, ageRating, trailerUrl, releaseYear, status, publishAt, totalSeasons, genres, casts } = req.body;
+        const data = { title, description, poster, ageRating, trailerUrl, releaseYear, status, publishAt, totalSeasons, genres, casts };
         const { seriesId } = req.params;
         const result = await seriesService.createSeries(data);
         return successResponse(res, 201, 'Series created successfully', result);
@@ -34,8 +34,8 @@ class SeriesController {
 
     update = async(req, res) => {
         const { id } = req.params;
-        const { title, description, poster, ageRating, trailerUrl, releaseYear, status, publishAt, totalSeasons } = req.body;
-        const data = { title, description, poster, ageRating, trailerUrl, releaseYear, status, publishAt, totalSeasons };
+        const { title, description, poster, ageRating, trailerUrl, releaseYear, status, publishAt, totalSeasons, genres, casts } = req.body;
+        const data = { title, description, poster, ageRating, trailerUrl, releaseYear, status, publishAt, totalSeasons, genres, casts };
 
         const series = await seriesService.updateSeries(id, data);
         return successResponse(res, 200, 'Series updated successfully', series);

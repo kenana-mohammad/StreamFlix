@@ -2,46 +2,53 @@ const express = require("express");
 const router = express.Router();
 
 const ratingController = require("../controllers/rating.controller");
-
-const validate = require("../../../middlewares/validate");
 const asyncHandler = require("../../../utils/asyncHandler");
-const auth = require("../../../middlewares/auth");
+const auth = require("../../../middlewares/Auth");
+const validateProfileToken = require("../../../middlewares/validateProfileToken");
 
-// Validation (سنضيفها بالخطوة القادمة)
 const {
-    createRatingValidation,
-    updateRatingValidation
+    createRatingValidation
 } = require("../validations/rating.validation");
 
-// APIs
-router.post(
-    "/",
-    [auth, ...createRatingValidation],
-    asyncHandler(ratingController.create)
-);
+const {
+    checkActiveSubscription
+} = require("../../../middlewares/checkActiveSubscription");
 
-router.put(
-    "/:contentId",
-    [auth, ...updateRatingValidation],
-    asyncHandler(ratingController.update)
-);
-
-router.delete(
-    "/:contentId",
-    auth,
-    asyncHandler(ratingController.remove)
-);
-
-// Front APIs
 router.get(
-    "/me",
+    "/my-ratings",
     auth,
+    validateProfileToken,
     asyncHandler(ratingController.getMyRatings)
 );
 
-router.get(
-    "/contents/:contentId/rating",
-    asyncHandler(ratingController.getContentRating)
+router.post(
+    "/:contentId",
+    auth,
+    validateProfileToken,
+    checkActiveSubscription,
+    ...createRatingValidation,
+    asyncHandler(ratingController.createOrUpdate)
 );
+
+
+
+router.get(
+    "/:contentId/my-rating",
+    auth,
+    validateProfileToken,
+    asyncHandler(ratingController.getMyRating)
+);
+
+
+
+
+
+
+
+router.get(
+    "/:contentId/all",
+    asyncHandler(ratingController.getContentRatings)
+);
+
 
 module.exports = router;
