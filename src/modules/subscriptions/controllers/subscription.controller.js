@@ -5,7 +5,7 @@ class SubscriptionController {
 
     createSubscription = async(req, res) => {
 
-        const { autoRenew, notes, paymentMethod, currency } = req.body;
+        const { autoRenew = false, notes = "", paymentMethod = "visa", currency = "USD" } = req.body || {};
         const subscriptionData = {
             userId: req._user.id,
             plan: req.plan,

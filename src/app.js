@@ -22,10 +22,10 @@ const {
     limiter
 } = require('./middlewares/limiter');
 const cors = require('cors');
-
 app.use(cors({
-    origin: "*"
-}))
+  origin: 'http://localhost:5173',
+  credentials: true
+}));
 app.use(cookies());
 //
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")))
