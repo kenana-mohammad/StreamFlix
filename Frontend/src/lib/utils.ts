@@ -113,22 +113,29 @@ export function normalizeContent(item: any): any {
       contentId: contentData._id || contentData.id,
       title: contentData.title,
       description: contentData.description || '',
+      // Both posterUrl and poster so any component works
       poster: contentData.poster,
-      type: contentData.type,
+      posterUrl: contentData.poster,
+      backdropUrl: contentData.poster, // fallback — no backdrop field in backend
+      type: contentData.type?.toLowerCase(),
       ageRating: contentData.ageRating,
       trailerUrl: contentData.trailerUrl,
       releaseYear: contentData.releaseYear,
+      year: contentData.releaseYear,   // ContentCard reads 'year'
       status: contentData.status,
       averageRating: contentData.averageRating || 0,
       ratingCount: contentData.ratingCount || 0,
       viewsCount: contentData.viewsCount || 0,
       publishAt: contentData.publishAt,
-      // Normalize genres - can be array of objects or strings
-      genres: Array.isArray(item.genres) ? item.genres.map((g: any) => ({
-        _id: g._id || g.id,
-        name: g.name || g
-      })) : [],
-      // Normalize casts - can be array of objects or strings
+      // Normalize genres — after getMovies/getSeries they are populated objects {_id, name}
+      genres: Array.isArray(item.genres) ? item.genres.map((g: any) => {
+        // Could be a Genre doc {_id, name} or a ContentGenre link {genreId: {...}}
+        if (g && g.genreId && typeof g.genreId === 'object') {
+          return { _id: g.genreId._id, name: g.genreId.name };
+        }
+        return { _id: g._id || g.id, name: g.name || '' };
+      }) : [],
+      // Normalize casts
       casts: Array.isArray(item.casts) ? item.casts.map((c: any) => ({
         _id: c._id || c.id,
         actor: c.actor || c,
@@ -143,28 +150,29 @@ export function normalizeContent(item: any): any {
     };
   }
 
-  // Otherwise it's direct content format (generic endpoint)
+  // Direct content format (generic /contents/client endpoint — no nesting)
   return {
     _id: item._id || item.id,
     id: item._id || item.id,
     title: item.title,
     description: item.description || '',
     poster: item.poster,
-    type: item.type,
+    posterUrl: item.poster,
+    backdropUrl: item.poster,
+    type: item.type?.toLowerCase(),
     ageRating: item.ageRating,
     trailerUrl: item.trailerUrl,
     releaseYear: item.releaseYear,
+    year: item.releaseYear,
     status: item.status,
     averageRating: item.averageRating || 0,
     ratingCount: item.ratingCount || 0,
     viewsCount: item.viewsCount || 0,
     publishAt: item.publishAt,
-    // Normalize genres
     genres: Array.isArray(item.genres) ? item.genres.map((g: any) => ({
       _id: g._id || g.id,
       name: g.name || g
     })) : [],
-    // Normalize casts
     casts: Array.isArray(item.casts) ? item.casts.map((c: any) => ({
       _id: c._id || c.id,
       actor: c.actor || c,

@@ -77,7 +77,7 @@ export default function AllSeriesPage() {
 
     if (selectedGenre !== 'all') {
       result = result.filter((item) =>
-        item.genres?.some((g: any) => g.genreId?._id === selectedGenre || g._id === selectedGenre)
+        item.genres?.some((g: any) => g._id === selectedGenre)
       );
     }
 

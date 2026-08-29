@@ -33,15 +33,18 @@ class ApiClient {
     this.client.interceptors.response.use(
       (response) => response,
       async (error: AxiosError<any>) => {
-        if (error.response?.status === 401) {
+        const originalRequest = error.config as any;
+
+        // Only attempt refresh once per request (prevent infinite loop)
+        if (error.response?.status === 401 && !originalRequest._retried) {
+          originalRequest._retried = true;
           try {
             await this.refreshToken();
-            if (error.config) {
-              return this.client(error.config);
-            }
+            return this.client(originalRequest);
           } catch (refreshError) {
+            // Refresh failed — user is not logged in, just reject silently
             this.clearProfileToken();
-            window.location.href = '/login';
+            return Promise.reject(error);
           }
         }
         
@@ -80,6 +83,11 @@ class ApiClient {
     return this.profileToken;
   }
 
+  // Expose the raw axios client for direct authenticated requests
+  get axiosClient() {
+    return this.client;
+  }
+
   // ==================== AUTH ====================
   async register(data: { name: string; email: string; phone: string; password: string }) {
     const response = await this.client.post('/auth/register', data);
@@ -109,11 +117,13 @@ class ApiClient {
 
   // ==================== USERS ====================
   async getCurrentUser() {
-    return (await this.client.get('/users')).data;
+    const response = await this.client.get('/users/get-my-profile');
+    return response.data.data || response.data;
   }
 
   async updateUser(data: any) {
-    return (await this.client.put('/users', data)).data;
+    const response = await this.client.put('/users/update-my-profile', data);
+    return response.data.data || response.data;
   }
 
   // ==================== PROFILES ====================
@@ -174,7 +184,7 @@ class ApiClient {
 
   // Get all content (generic - movies + series combined)
   async getClientContents(params?: any) {
-    const response = await this.client.get('/content/client', { params });
+    const response = await this.client.get('/contents/client', { params });
     return response.data.data || response.data;
   }
 
@@ -184,15 +194,15 @@ class ApiClient {
     return response.data.data || response.data;
   }
 
-  // Get single movie by ID - using Movie endpoint
+  // Get single movie by ID
   async getMovieById(movieId: string) {
     try {
       const response = await this.client.get(`/movies/client/${movieId}`);
       return response.data.data || response.data;
     } catch (error) {
-      // Fallback to generic content endpoint if movie endpoint fails
-      console.warn('Movie endpoint failed, trying generic endpoint:', error);
-      const response = await this.client.get(`/content/client/${movieId}`);
+      // Fallback to series endpoint
+      console.warn('Movie endpoint failed, trying series:', error);
+      const response = await this.client.get(`/series/client/${movieId}`);
       return response.data.data || response.data;
     }
   }
@@ -203,43 +213,43 @@ class ApiClient {
     return response.data.data || response.data;
   }
 
-  // Get single series by ID - using Series endpoint
+  // Get single series by ID
   async getSeriesById(seriesId: string) {
     try {
       const response = await this.client.get(`/series/client/${seriesId}`);
       return response.data.data || response.data;
     } catch (error) {
-      // Fallback to generic content endpoint if series endpoint fails
-      console.warn('Series endpoint failed, trying generic endpoint:', error);
-      const response = await this.client.get(`/content/client/${seriesId}`);
+      // Fallback to movies endpoint
+      console.warn('Series endpoint failed, trying movies:', error);
+      const response = await this.client.get(`/movies/client/${seriesId}`);
       return response.data.data || response.data;
     }
   }
 
   async getTopRatedContent() {
-    const response = await this.client.get('/content/top-rated');
+    const response = await this.client.get('/contents/top-rated');
     return response.data.data || response.data;
   }
 
   async getContentById(contentId: string) {
+    // Try movie endpoint → series endpoint → generic contents endpoint
     try {
-      const response = await this.client.get(`/content/client/${contentId}`);
+      const response = await this.client.get(`/movies/client/${contentId}`);
       return response.data.data || response.data;
-    } catch (error) {
-      console.error('Failed to fetch content:', error);
-      throw error;
+    } catch {
+      try {
+        const response = await this.client.get(`/series/client/${contentId}`);
+        return response.data.data || response.data;
+      } catch {
+        const response = await this.client.get(`/contents/client/${contentId}`);
+        return response.data.data || response.data;
+      }
     }
   }
 
-  // Get content details - uses generic content endpoint for best compatibility
+  // Get content details - same smart fallback approach
   async getContentDetailsSmart(contentId: string) {
-    try {
-      const response = await this.client.get(`/content/client/${contentId}`);
-      return response.data.data || response.data;
-    } catch (error) {
-      console.error('Failed to fetch content:', error);
-      throw error;
-    }
+    return this.getContentById(contentId);
   }
 
   // ==================== WATCHLIST ====================
@@ -284,6 +294,10 @@ class ApiClient {
   // ==================== RATINGS ====================
   async getMyRatings() {
     return (await this.client.get('/ratings/my-ratings')).data;
+  }
+
+  async getMyRatingForContent(contentId: string) {
+    return (await this.client.get(`/ratings/${contentId}/my-rating`)).data;
   }
 
   async addOrUpdateRating(contentId: string, data: any) {
@@ -359,7 +373,173 @@ class ApiClient {
     return (await this.client.get('/genres')).data;
   }
 
-  // ==================== BROWSER / SEARCH ====================
+  // ==================== ADMIN / UPLOAD ====================
+  async uploadVideo(file: File, onProgress?: (pct: number) => void) {
+    const form = new FormData();
+    form.append('video', file);
+    const response = await this.client.post('/admin/upload/video', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress: (e) => {
+        if (onProgress && e.total) onProgress(Math.round((e.loaded * 100) / e.total));
+      },
+    });
+    return response.data.data || response.data;
+  }
+
+  async uploadPoster(file: File, onProgress?: (pct: number) => void) {
+    const form = new FormData();
+    form.append('poster', file);
+    const response = await this.client.post('/admin/upload/poster', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress: (e) => {
+        if (onProgress && e.total) onProgress(Math.round((e.loaded * 100) / e.total));
+      },
+    });
+    return response.data.data || response.data;
+  }
+
+  async deleteUploadedFile(public_id: string, resource_type: 'video' | 'image') {
+    const response = await this.client.delete('/admin/upload', { data: { public_id, resource_type } });
+    return response.data.data || response.data;
+  }
+
+  async getUploadSignature(folder: 'videos' | 'posters', fileType: string) {
+    const response = await this.client.post('/admin/upload/signature', { folder, fileType });
+    return response.data.data || response.data;
+  }
+
+  // ==================== ADMIN / CONTENT MANAGEMENT ====================
+  // Movies
+  async adminCreateMovie(data: any) {
+    const response = await this.client.post('/movies/admin', data);
+    return response.data.data || response.data;
+  }
+  async adminGetMovies() {
+    const response = await this.client.get('/movies/admin');
+    return response.data.data || response.data;
+  }
+  async adminUpdateMovie(id: string, data: any) {
+    const response = await this.client.put(`/movies/admin/${id}`, data);
+    return response.data.data || response.data;
+  }
+  async adminDeleteMovie(id: string) {
+    const response = await this.client.delete(`/movies/admin/${id}`);
+    return response.data.data || response.data;
+  }
+
+  // Series
+  async adminCreateSeries(data: any) {
+    const response = await this.client.post('/series/admin', data);
+    return response.data.data || response.data;
+  }
+  async adminGetSeries() {
+    const response = await this.client.get('/series/admin');
+    return response.data.data || response.data;
+  }
+  async adminGetSeriesById(id: string) {
+    const response = await this.client.get(`/series/admin/${id}`);
+    return response.data.data || response.data;
+  }
+  async adminUpdateSeries(id: string, data: any) {
+    const response = await this.client.put(`/series/admin/${id}`, data);
+    return response.data.data || response.data;
+  }
+  async adminDeleteSeries(id: string) {
+    const response = await this.client.delete(`/series/admin/${id}`);
+    return response.data.data || response.data;
+  }
+
+  // Seasons
+  async adminCreateSeason(seriesId: string, data: any) {
+    const response = await this.client.post(`/seasons/admin/${seriesId}`, data);
+    return response.data.data || response.data;
+  }
+  async adminGetSeasonsBySeries(seriesId: string) {
+    const response = await this.client.get(`/seasons/series/${seriesId}`);
+    return response.data.data || response.data;
+  }
+  async adminUpdateSeason(id: string, data: any) {
+    const response = await this.client.put(`/seasons/admin/${id}`, data);
+    return response.data.data || response.data;
+  }
+  async adminDeleteSeason(id: string) {
+    const response = await this.client.delete(`/seasons/admin/${id}`);
+    return response.data.data || response.data;
+  }
+
+  // Episodes
+  async adminCreateEpisode(seasonId: string, data: any) {
+    const response = await this.client.post(`/episodes/admin/season/${seasonId}`, data);
+    return response.data.data || response.data;
+  }
+  async adminGetEpisodesBySeason(seasonId: string) {
+    const response = await this.client.get(`/episodes/season/${seasonId}`);
+    return response.data.data || response.data;
+  }
+  async getEpisodeById(episodeId: string) {
+    const response = await this.client.get(`/episodes/${episodeId}`);
+    return response.data.data || response.data;
+  }
+  async adminUpdateEpisode(id: string, data: any) {
+    const response = await this.client.put(`/episodes/admin/${id}`, data);
+    return response.data.data || response.data;
+  }
+  async adminDeleteEpisode(id: string) {
+    const response = await this.client.delete(`/episodes/admin/${id}`);
+    return response.data.data || response.data;
+  }
+
+  // Cast (admin)
+  async adminGetCast() {
+    const response = await this.client.get('/cast');
+    return response.data.data || response.data;
+  }
+
+  // ==================== ADMIN / DASHBOARD ====================
+  async getDashboardStats() {
+    const response = await this.client.get('/dashboard');
+    return response.data.data || response.data;
+  }
+
+  async getDashboardRecentRatings() {
+    const response = await this.client.get('/dashboard/ratings/recent');
+    return response.data.data || response.data;
+  }
+
+  async getAdminUsers(query?: string) {
+    const response = await this.client.get('/admin/users', { params: query ? { query } : {} });
+    return response.data.data || response.data;
+  }
+
+  async getAdminUserById(userId: string) {
+    const response = await this.client.get(`/admin/users/${userId}`);
+    return response.data.data || response.data;
+  }
+
+  async updateAdminUserStatus(userId: string, status: 'active' | 'deactivated') {
+    const response = await this.client.put(`/admin/users/update-status/${userId}`, { status });
+    return response.data.data || response.data;
+  }
+
+  async createContentManager(data: { name: string; email: string; password: string; phone?: string }) {
+    const response = await this.client.post('/admin/users/create/content-manager', data);
+    return response.data.data || response.data;
+  }
+
+  async getAdminAnalytics() {
+    const response = await this.client.get('/admin/analytics');
+    return response.data.data || response.data;
+  }
+
+  async getAdminSubscriptions() {
+    const response = await this.client.get('/admin/subscriptions');
+    return response.data.data || response.data;
+  }
+
+  async getAdminRatings() {
+    const response = await this.client.get('/admin/ratings');
+    return response.data.data || response.data;
+  }
   async searchContent(query: string) {
     return (await this.client.get('/content/client', { 
       params: { search: query } 

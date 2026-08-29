@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Loader, AlertCircle } from 'lucide-react';
+import { Search, Loader, AlertCircle } from 'lucide-react';
 import { useProfile } from '@/lib/profileContext';
 import { apiClient } from '@/lib/apiClient';
+import { normalizeContentArray } from '@/lib/utils';
 import ContentCard from '@/components/ContentCard';
 
 export default function BrowsePage() {
@@ -32,16 +33,18 @@ export default function BrowsePage() {
       setLoading(true);
       setError('');
 
-      const [contentRes, genresRes] = await Promise.all([
-        apiClient.getClientContents(),
+      const [moviesRes, seriesRes, genresRes] = await Promise.all([
+        apiClient.getAllMovies(),
+        apiClient.getAllSeries(),
         apiClient.getGenres(),
       ]);
 
-      const contentData = Array.isArray(contentRes) ? contentRes : (contentRes?.data || contentRes);
-      const genresData = Array.isArray(genresRes) ? genresRes : (genresRes?.data || genresRes);
-      
-      setAllContent(contentData || []);
-      setGenres(genresData || []);
+      const movies = normalizeContentArray(Array.isArray(moviesRes) ? moviesRes : []);
+      const series = normalizeContentArray(Array.isArray(seriesRes) ? seriesRes : []);
+      const genresData = Array.isArray(genresRes) ? genresRes : (genresRes?.data || []);
+
+      setAllContent([...movies, ...series]);
+      setGenres(genresData);
     } catch (err: any) {
       const msg = err?.response?.data?.message || 'Failed to load content';
       setError(msg);
@@ -66,7 +69,7 @@ export default function BrowsePage() {
     // Genre filter
     if (selectedGenre !== 'all') {
       result = result.filter((item) =>
-        item.genres?.some((g: any) => g.genreId._id === selectedGenre)
+        item.genres?.some((g: any) => g._id === selectedGenre)
       );
     }
 

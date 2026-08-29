@@ -53,29 +53,50 @@ export default function WatchPage() {
       setLoading(true);
       setError('');
 
-      // جلب تفاصيل المحتوى
-      const contentResponse = await apiClient.getContentById(id!);
-      setContent(contentResponse.data);
+      // Check if this is an episode (query param ?type=episode)
+      const params = new URLSearchParams(window.location.search);
+      const isEpisode = params.get('type') === 'episode';
 
-      // جلب التقدم السابق
-      try {
-        const progressResponse = await apiClient.getWatchHistory();
-        const historyData = Array.isArray(progressResponse) ? progressResponse : (progressResponse?.data || progressResponse);
-        const historyArray = Array.isArray(historyData) ? historyData : [];
-        
-        const contentHistory = historyArray.find((h: any) => {
-          const hContentId = typeof h.contentId === 'object' ? h.contentId._id : h.contentId;
-          return hContentId === id;
-        });
-        if (contentHistory && contentHistory.watchedDuration > 0) {
-          setCurrentTime(contentHistory.watchedDuration);
+      let contentData: any = null;
+
+      if (isEpisode) {
+        // Load episode by ID from the dedicated episode endpoint
+        try {
+          const epData = await apiClient.getEpisodeById(id!);
+          contentData = epData?.data || epData;
+          // Ensure videoUrl is accessible
+          if (!contentData.videoUrl && contentData.video) {
+            contentData.videoUrl = contentData.video;
+          }
+          // Add display fields
+          contentData.title = contentData.title || `Episode ${contentData.episodeNumber}`;
+          contentData.description = contentData.description || '';
+        } catch {
+          throw new Error('Episode not found');
         }
-      } catch (err) {
-        // لا تتوقف عند فشل جلب التقدم
-        console.error('Failed to load progress:', err);
+      } else {
+        // Movie/Series
+        const raw = await apiClient.getContentById(id!);
+        const { normalizeContent } = await import('@/lib/utils');
+        contentData = normalizeContent(raw) || raw;
       }
+
+      if (!contentData) throw new Error('Content not found');
+      setContent(contentData);
+
+      // Load previous progress
+      try {
+        const historyRes = await apiClient.getWatchHistory();
+        const historyArr = Array.isArray(historyRes) ? historyRes : (historyRes?.data || []);
+        const found = historyArr.find((h: any) => {
+          const cId = typeof h.contentId === 'object' ? h.contentId._id : h.contentId;
+          return cId === id;
+        });
+        if (found?.watchedDuration > 0) setCurrentTime(found.watchedDuration);
+      } catch { /* silent */ }
+
     } catch (err: any) {
-      const msg = err?.response?.data?.message || 'Failed to load content';
+      const msg = err?.response?.data?.message || err?.message || 'Failed to load content';
       setError(msg);
       showToast(msg, 'error');
     } finally {
@@ -272,7 +293,7 @@ export default function WatchPage() {
         {/* الفيديو */}
         <video
           ref={videoRef}
-          src={(content as any).videoUrl || ''}
+          src={(content as any).videoUrl || (content as any).video || ''}
           className="w-full h-full"
           onTimeUpdate={handleTimeUpdate}
           onLoadedMetadata={handleLoadedMetadata}

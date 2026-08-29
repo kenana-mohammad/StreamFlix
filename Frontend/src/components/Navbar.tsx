@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Menu, X, LogOut, Settings, User } from 'lucide-react';
+import { Menu, X, LogOut, Settings, User, LayoutDashboard } from 'lucide-react';
 import { useProfile } from '@/lib/profileContext';
 import { useAuth } from '@/lib/authContext';
 import { useToast } from '@/lib/useToast';
@@ -11,13 +11,16 @@ export default function Navbar() {
   const navigate = useNavigate();
   const toast = useToast();
   const { profileToken, currentProfile } = useProfile();
-  const { isAuthenticated, userName } = useAuth();
+  const { isAuthenticated, userName, user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
   const isLoggedIn = !!profileToken && !!currentProfile;
   const displayName = currentProfile?.name || userName || 'User';
+  const isAdmin = user?.role === 'super_admin';
+  const isContentManager = user?.role === 'content_manager';
+  const canUpload = isAdmin || isContentManager;
 
   // Detect scroll for navbar background change
   useEffect(() => {
@@ -31,10 +34,10 @@ export default function Navbar() {
   const handleLogout = async () => {
     try {
       await apiClient.logout();
-      toast.success('تم تسجيل الخروج بنجاح');
+      toast.success('Logged out successfully');
       window.location.href = '/login';
     } catch (err) {
-      toast.error('حدث خطأ أثناء تسجيل الخروج');
+      toast.error('Error logging out');
     }
   };
 
@@ -130,8 +133,10 @@ export default function Navbar() {
               {showProfileMenu && (
                 <div className="absolute right-0 mt-2 w-56 bg-ink-850/95 backdrop-blur-md rounded-lg border border-ink-600 shadow-2xl overflow-hidden animate-scaleIn">
                   <div className="p-4 border-b border-ink-600 bg-ink-900/50">
-                    <p className="text-xs text-gray-500 mb-1">مسجل الدخول باسم</p>
+                    <p className="text-xs text-gray-500 mb-1">Signed in as</p>
                     <p className="text-sm text-white font-semibold">{displayName}</p>
+                    {isAdmin && <p className="text-xs text-brand-400 mt-0.5">Super Admin</p>}
+                    {isContentManager && <p className="text-xs text-purple-400 mt-0.5">Content Manager</p>}
                   </div>
 
                   <div className="space-y-1 p-2">
@@ -140,7 +145,7 @@ export default function Navbar() {
                       className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-ink-700/50 rounded transition-colors"
                     >
                       <User size={16} />
-                      تبديل الملف الشخصي
+                      Switch Profile
                     </button>
                     <button
                       onClick={() => {
@@ -150,7 +155,7 @@ export default function Navbar() {
                       className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-ink-700/50 rounded transition-colors"
                     >
                       <Settings size={16} />
-                      إعدادات الحساب
+                      Account Settings
                     </button>
                     <button
                       onClick={() => {
@@ -160,15 +165,39 @@ export default function Navbar() {
                       className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-ink-700/50 rounded transition-colors"
                     >
                       <span>💳</span>
-                      الاشتراك
+                      Subscription
                     </button>
+                    {isAdmin && (
+                      <>
+                        <hr className="my-1 border-ink-600" />
+                        <button
+                          onClick={() => { navigate('/admin'); setShowProfileMenu(false); }}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-brand-400 hover:text-brand-300 hover:bg-brand-500/10 rounded transition-colors font-medium"
+                        >
+                          <LayoutDashboard size={16} />
+                          Admin Dashboard
+                        </button>
+                      </>
+                    )}
+                    {canUpload && (
+                      <>
+                        {!isAdmin && <hr className="my-1 border-ink-600" />}
+                        <button
+                          onClick={() => { navigate('/admin/upload'); setShowProfileMenu(false); }}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 rounded transition-colors font-medium"
+                        >
+                          <span>⬆️</span>
+                          Upload Content
+                        </button>
+                      </>
+                    )}
                     <hr className="my-2 border-ink-600" />
                     <button
                       onClick={handleLogout}
                       className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-error-400 hover:text-error-300 hover:bg-error-500/10 rounded transition-colors"
                     >
                       <LogOut size={16} />
-                      تسجيل الخروج
+                      Logout
                     </button>
                   </div>
                 </div>
@@ -213,7 +242,7 @@ export default function Navbar() {
               }}
               className="block w-full text-left px-4 py-2.5 text-gray-300 hover:text-white hover:bg-ink-700/50 rounded transition-colors"
             >
-              الرئيسية
+              Home
             </button>
             <button
               onClick={() => {
@@ -222,7 +251,7 @@ export default function Navbar() {
               }}
               className="block w-full text-left px-4 py-2.5 text-gray-300 hover:text-white hover:bg-ink-700/50 rounded transition-colors"
             >
-              الخطط
+              Plans
             </button>
             <button
               onClick={() => {
@@ -231,70 +260,63 @@ export default function Navbar() {
               }}
               className="block w-full text-left px-4 py-2.5 text-gray-300 hover:text-white hover:bg-ink-700/50 rounded transition-colors"
             >
-              التقييمات
+              Ratings
             </button>
 
             {isLoggedIn && (
               <>
                 <hr className="my-2 border-ink-600" />
                 <button
-                  onClick={() => {
-                    navigate('/browse');
-                    setIsOpen(false);
-                  }}
+                  onClick={() => { navigate('/browse'); setIsOpen(false); }}
                   className="block w-full text-left px-4 py-2.5 text-gray-300 hover:text-white hover:bg-ink-700/50 rounded transition-colors"
                 >
-                  تصفح
+                  Browse
                 </button>
                 <button
-                  onClick={() => {
-                    navigate('/favorites');
-                    setIsOpen(false);
-                  }}
+                  onClick={() => { navigate('/favorites'); setIsOpen(false); }}
                   className="block w-full text-left px-4 py-2.5 text-gray-300 hover:text-white hover:bg-ink-700/50 rounded transition-colors"
                 >
-                  المفضلة
+                  Favorites
                 </button>
                 <button
-                  onClick={() => {
-                    navigate('/watchlist');
-                    setIsOpen(false);
-                  }}
+                  onClick={() => { navigate('/watchlist'); setIsOpen(false); }}
                   className="block w-full text-left px-4 py-2.5 text-gray-300 hover:text-white hover:bg-ink-700/50 rounded transition-colors"
                 >
-                  قائمتي
+                  My List
                 </button>
                 <hr className="my-2 border-ink-600" />
                 <button
                   onClick={handleProfileClick}
                   className="block w-full text-left px-4 py-2.5 text-gray-300 hover:text-white hover:bg-ink-700/50 rounded transition-colors"
                 >
-                  تبديل الملف الشخصي
+                  Switch Profile
                 </button>
                 <button
-                  onClick={() => {
-                    navigate('/account');
-                    setIsOpen(false);
-                  }}
+                  onClick={() => { navigate('/account'); setIsOpen(false); }}
                   className="block w-full text-left px-4 py-2.5 text-gray-300 hover:text-white hover:bg-ink-700/50 rounded transition-colors"
                 >
-                  إعدادات الحساب
+                  Account Settings
                 </button>
                 <button
-                  onClick={() => {
-                    navigate('/subscription');
-                    setIsOpen(false);
-                  }}
+                  onClick={() => { navigate('/subscription'); setIsOpen(false); }}
                   className="block w-full text-left px-4 py-2.5 text-gray-300 hover:text-white hover:bg-ink-700/50 rounded transition-colors"
                 >
-                  الاشتراك
+                  Subscription
                 </button>
+                {isAdmin && (
+                  <button
+                    onClick={() => { navigate('/admin'); setIsOpen(false); }}
+                    className="block w-full text-left px-4 py-2.5 text-brand-400 hover:text-brand-300 hover:bg-brand-500/10 rounded transition-colors font-medium"
+                  >
+                    Admin Dashboard
+                  </button>
+                )}
                 <hr className="my-2 border-ink-600" />
                 <button
                   onClick={handleLogout}
                   className="block w-full text-left px-4 py-2.5 text-error-400 hover:text-error-300 hover:bg-error-500/10 rounded transition-colors font-medium"
                 >
-                  تسجيل الخروج
+                  Logout
                 </button>
               </>
             )}
@@ -303,22 +325,16 @@ export default function Navbar() {
               <>
                 <hr className="my-2 border-ink-600" />
                 <button
-                  onClick={() => {
-                    navigate('/login');
-                    setIsOpen(false);
-                  }}
+                  onClick={() => { navigate('/login'); setIsOpen(false); }}
                   className="block w-full text-left px-4 py-2.5 text-gray-300 hover:text-white hover:bg-ink-700/50 rounded transition-colors"
                 >
-                  دخول
+                  Sign In
                 </button>
                 <button
-                  onClick={() => {
-                    navigate('/register');
-                    setIsOpen(false);
-                  }}
+                  onClick={() => { navigate('/register'); setIsOpen(false); }}
                   className="block w-full text-left px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded transition-colors font-medium"
                 >
-                  إنشاء حساب
+                  Create Account
                 </button>
               </>
             )}

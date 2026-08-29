@@ -43,18 +43,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const checkAuth = useCallback(async (): Promise<boolean> => {
     try {
       setIsLoading(true);
-      // محاولة جلب البروفايلات - إذا نجحت = المستخدم مسجل دخول
       const response = await apiClient.getProfiles();
       
       if (response && (Array.isArray(response) || response.data)) {
         setIsAuthenticated(true);
-        // Try to get current user data
+        // Also fetch user data so role is available (e.g. for admin dashboard)
         try {
           const currentUser = await apiClient.getCurrentUser();
-          setUser(currentUser);
-          setUserName(currentUser?.name || null);
-        } catch (err) {
-          console.error('Could not fetch current user:', err);
+          const userData = currentUser?.data || currentUser;
+          if (userData) {
+            setUser(userData);
+            setUserName(userData?.name || null);
+          }
+        } catch {
+          // Non-critical — auth is still valid
         }
         return true;
       }
@@ -62,7 +64,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsAuthenticated(false);
       return false;
     } catch (error: any) {
-      // لا توجد auth cookie = ضيف
       setIsAuthenticated(false);
       return false;
     } finally {
@@ -70,21 +71,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Called after successful login/register to update auth state
   const onLoginSuccess = useCallback(async (response?: any) => {
-    try {
-      // If response contains user data, set it directly
-      if (response?.userObj || response?.user) {
-        setUser(response?.userObj || response?.user);
-        setUserName((response?.userObj?.name || response?.user?.name) || null);
-      }
-      
-      // Set authenticated flag immediately
-      setIsAuthenticated(true);
-    } catch (error: any) {
-      console.error('Error during onLoginSuccess:', error);
-      setIsAuthenticated(false);
+    // Set user data immediately from the login/register response
+    const userData = response?.userObj || response?.user || null;
+    if (userData) {
+      setUser(userData);
+      setUserName(userData?.name || null);
     }
+    setIsAuthenticated(true);
+    setIsLoading(false);
   }, []);
 
   const logout = useCallback(async () => {

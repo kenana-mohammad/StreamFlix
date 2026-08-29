@@ -1,472 +1,612 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Play, Plus, Check, Share2, Star, AlertCircle, Loader, Heart } from 'lucide-react';
-import { useApp } from '@/store';
+import {
+  Play, Plus, Check, Star, AlertCircle, Loader, Heart,
+  ChevronDown, ChevronUp, Clock, Calendar, Tag, Users,
+} from 'lucide-react';
 import { useProfile } from '@/lib/profileContext';
 import { apiClient } from '@/lib/apiClient';
+import { normalizeContent } from '@/lib/utils';
+import { useToast } from '@/lib/useToast';
 import ContentRow from '@/components/ContentRow';
+
+type Tab = 'overview' | 'episodes' | 'ratings';
 
 export default function ContentDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { openContent, showToast } = useApp();
+  const toast = useToast();
   const { profileToken } = useProfile();
 
-  const [content, setContent] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [content, setContent]           = useState<any>(null);
+  const [loading, setLoading]           = useState(true);
+  const [error, setError]               = useState('');
+  const [tab, setTab]                   = useState<Tab>('overview');
+
+  // Watchlist / Favorites
+  const [isFavorite, setIsFavorite]     = useState(false);
   const [isWatchlisted, setIsWatchlisted] = useState(false);
-  const [userRating, setUserRating] = useState<any>(null);
-  const [ratings, setRatings] = useState<any[]>([]);
-  const [ratingModalOpen, setRatingModalOpen] = useState(false);
-  const [myRating, setMyRating] = useState<number>(0);
-  const [ratingComment, setRatingComment] = useState('');
-  const [submittingRating, setSubmittingRating] = useState(false);
-  const [relatedContent, setRelatedContent] = useState<any[]>([]);
+
+  // Ratings
+  const [ratings, setRatings]           = useState<any[]>([]);
+  const [myRating, setMyRating]         = useState(0);
+  const [myReview, setMyReview]         = useState('');
+  const [ratingOpen, setRatingOpen]     = useState(false);
+  const [submitting, setSubmitting]     = useState(false);
+
+  // Episodes (series)
+  const [seasons, setSeasons]           = useState<any[]>([]);
+  const [openSeason, setOpenSeason]     = useState<string | null>(null);
+  const [episodes, setEpisodes]         = useState<Record<string, any[]>>({});
+  const [loadingEp, setLoadingEp]       = useState<string | null>(null);
+
+  // Related
+  const [related, setRelated]           = useState<any[]>([]);
 
   useEffect(() => {
-    if (!id || !profileToken) {
-      navigate('/profiles');
-      return;
-    }
-
-    loadContentDetails();
+    if (!id || !profileToken) { navigate('/profiles'); return; }
+    load();
   }, [id, profileToken]);
 
-  const loadContentDetails = async () => {
+  // ── Load ─────────────────────────────────────────────────────────────────
+  const load = async () => {
     try {
-      setLoading(true);
-      setError('');
+      setLoading(true); setError('');
 
-      // Fetch content details using the ID from the route parameter
-      const contentRes = await apiClient.getContentById(id!);
-      if (!contentRes) {
-        throw new Error('Content not found');
+      const raw = await apiClient.getContentById(id!);
+      const c   = normalizeContent(raw);
+      if (!c) throw new Error('Content not found');
+      setContent(c);
+
+      const isSeries = c.type === 'series' || c.type === 'Series';
+
+      if (isSeries) {
+        await loadSeasonsForSeries(id!, raw);
       }
-      setContent(contentRes);
 
-      // Fetch all ratings for content
+      // Ratings
       try {
-        const ratingsRes = await apiClient.getContentRatings(id!);
-        setRatings(Array.isArray(ratingsRes) ? ratingsRes : (ratingsRes?.data || []));
-      } catch (err) {
-        // Silent fail - ratings are optional
-        console.error('Failed to fetch ratings:', err);
-      }
+        const rRes = await apiClient.getContentRatings(id!);
+        const rData = rRes?.ratings || rRes?.data || (Array.isArray(rRes) ? rRes : []);
+        setRatings(Array.isArray(rData) ? rData : []);
+      } catch { /* silent */ }
 
-      // Fetch user's rating if exists
+      // My rating
       try {
-        const userRatingRes = await apiClient.addOrUpdateRating(id!, {});
-        setUserRating(userRatingRes);
-        if (userRatingRes?.rating) {
-          setMyRating(userRatingRes.rating);
-          setRatingComment(userRatingRes.review || '');
-        }
-      } catch {
-        // User hasn't rated yet - silent fail
-      }
+        const mine = await apiClient.getMyRatingForContent(id!);
+        const d = mine?.data || mine;
+        if (d?.rating) { setMyRating(d.rating); setMyReview(d.review || ''); }
+      } catch { /* not rated yet */ }
 
-      // Check if in favorites
+      // Favorites / Watchlist
       try {
-        const favoritesRes = await apiClient.getFavorites();
-        const favoritesList = Array.isArray(favoritesRes) ? favoritesRes : (favoritesRes?.data || []);
-        const isFav = favoritesList.some((fav: any) => fav.contentId?._id === id || fav._id === id);
-        setIsFavorite(isFav);
-      } catch (err) {
-        console.error('Failed to check favorites:', err);
-      }
+        const [favRes, wlRes] = await Promise.all([
+          apiClient.getFavorites(),
+          apiClient.getWatchlist(),
+        ]);
+        const favList = Array.isArray(favRes) ? favRes : (favRes?.data || []);
+        const wlList  = Array.isArray(wlRes)  ? wlRes  : (wlRes?.data  || []);
+        setIsFavorite(favList.some((f: any) => f.contentId?._id === id || f.contentId === id));
+        setIsWatchlisted(wlList.some((w: any) => w.contentId?._id === id || w.contentId === id));
+      } catch { /* silent */ }
 
-      // Check if in watchlist
+      // Related
       try {
-        const watchlistRes = await apiClient.getWatchlist();
-        const watchlist = Array.isArray(watchlistRes) ? watchlistRes : (watchlistRes?.data || []);
-        const isWatch = watchlist.some((item: any) => item.contentId?._id === id || item._id === id);
-        setIsWatchlisted(isWatch);
-      } catch (err) {
-        console.error('Failed to check watchlist:', err);
-      }
+        const [movies, series] = await Promise.all([
+          apiClient.getAllMovies(),
+          apiClient.getAllSeries(),
+        ]);
+        const all = [
+          ...(Array.isArray(movies) ? movies : []).map(normalizeContent),
+          ...(Array.isArray(series) ? series : []).map(normalizeContent),
+        ].filter(Boolean);
+        const genreNames = new Set((c.genres || []).map((g: any) => g.name).filter(Boolean));
+        const rel = all.filter((x: any) =>
+          x._id !== id &&
+          (x.genres || []).some((g: any) => genreNames.has(g.name))
+        );
+        setRelated(rel.slice(0, 10));
+      } catch { /* silent */ }
 
-      // Fetch related content (same genre)
-      try {
-        const allContentRes = await apiClient.getClientContents();
-        const allContent = Array.isArray(allContentRes) ? allContentRes : (allContentRes?.data || []);
-        
-        if (contentRes?.genres && Array.isArray(allContent)) {
-          const genreIds = contentRes.genres.map((g: any) => {
-            return typeof g === 'object' && g.genreId ? 
-              (typeof g.genreId === 'object' ? g.genreId._id : g.genreId) : 
-              (typeof g === 'string' ? g : null);
-          }).filter(Boolean);
-
-          const related = allContent.filter(
-            (c: any) => c._id !== id && c.genres?.some((g: any) => {
-              const genreId = typeof g === 'object' && g.genreId ? 
-                (typeof g.genreId === 'object' ? g.genreId._id : g.genreId) : 
-                (typeof g === 'string' ? g : null);
-              return genreId && genreIds.includes(genreId);
-            })
-          );
-          setRelatedContent(related.slice(0, 10));
-        }
-      } catch (err) {
-        console.error('Failed to load related content:', err);
-      }
     } catch (err: any) {
-      const msg = err?.response?.data?.message || err?.message || 'Failed to load content details';
-      setError(msg);
-      showToast(msg, 'error');
+      setError(err?.response?.data?.message || err?.message || 'Failed to load');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAddToFavorites = async () => {
+  // ── Load seasons — tries every available path ──────────────────────────
+  const loadSeasonsForSeries = async (seriesId: string, rawData?: any) => {
+    // Strategy 1: public seasons endpoint — returns seasons with episodes populated inline
     try {
-      if (isFavorite) {
-        await apiClient.removeFromFavorites(id!);
-        setIsFavorite(false);
-        showToast('Removed from favorites', 'success');
-      } else {
-        await apiClient.addToFavorites(id!);
-        setIsFavorite(true);
-        showToast('Added to favorites', 'success');
+      const pubRes = await apiClient.adminGetSeasonsBySeries(seriesId);
+      const pubSeasons: any[] = Array.isArray(pubRes) ? pubRes : (pubRes?.data || []);
+      if (pubSeasons.length > 0) {
+        const sorted = sortSeasons(pubSeasons);
+        setSeasons(sorted);
+        setOpenSeason(sorted[0]._id);
+        // Episodes come populated inline from the seasons endpoint
+        populateEpisodesFromInline(sorted);
+        return;
       }
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || 'Failed to update favorites';
-      showToast(msg, 'error');
+    } catch { /* silent */ }
+
+    // Strategy 2: admin series endpoint — works for super_admin/content_manager
+    try {
+      const adminRes = await apiClient.adminGetSeriesById(seriesId);
+      const detail = adminRes?.series || adminRes;
+      const adminSeasons: any[] = detail?.seasons || [];
+      if (adminSeasons.length > 0) {
+        const sorted = sortSeasons(adminSeasons);
+        setSeasons(sorted);
+        setOpenSeason(sorted[0]._id);
+        populateEpisodesFromInline(sorted);
+        return;
+      }
+    } catch { /* 403 for regular users — expected */ }
+
+    // Strategy 3: inline from the series client response
+    const inlineSeasons: any[] = rawData?.seasons || [];
+    if (inlineSeasons.length > 0) {
+      const sorted = sortSeasons(inlineSeasons);
+      setSeasons(sorted);
+      setOpenSeason(sorted[0]._id);
+      populateEpisodesFromInline(sorted);
     }
   };
 
-  const handleAddToWatchlist = async () => {
-    try {
-      if (isWatchlisted) {
-        await apiClient.removeFromWatchlist(id!);
-        setIsWatchlisted(false);
-        showToast('Removed from watchlist', 'success');
-      } else {
-        await apiClient.addToWatchlist(id!);
-        setIsWatchlisted(true);
-        showToast('Added to watchlist', 'success');
+  const sortSeasons = (s: any[]) =>
+    [...s].filter(Boolean).sort((a, b) => a.seasonNumber - b.seasonNumber);
+
+  const populateEpisodesFromInline = (sorted: any[]) => {
+    const epMap: Record<string, any[]> = {};
+    sorted.forEach((s: any) => {
+      const eps: any[] = s.episodes || [];
+      if (eps.length > 0) {
+        epMap[s._id] = [...eps].sort((a: any, b: any) => a.episodeNumber - b.episodeNumber);
       }
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || 'Failed to update watchlist';
-      showToast(msg, 'error');
-    }
+    });
+    if (Object.keys(epMap).length > 0) setEpisodes(epMap);
   };
 
-  const handleSubmitRating = async () => {
-    if (!myRating) {
-      showToast('Please select a rating', 'error');
-      return;
-    }
-
+  // ── Load episodes for a season (fallback if not populated inline) ─────────
+  const loadEpisodes = async (seasonId: string) => {
+    // Skip if already loaded
+    if (episodes[seasonId]?.length > 0) return;
     try {
-      setSubmittingRating(true);
-      await apiClient.addOrUpdateRating(id!, {
-        rating: myRating,  // Changed from 'score' to 'rating'
-        review: ratingComment,  // Changed from 'comment' to 'review'
-      });
-      showToast('Rating submitted successfully', 'success');
-      setRatingModalOpen(false);
-      loadContentDetails();
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || 'Failed to submit rating';
-      showToast(msg, 'error');
+      setLoadingEp(seasonId);
+      const res = await apiClient.adminGetEpisodesBySeason(seasonId);
+      const eps = Array.isArray(res) ? res : (res?.data || []);
+      setEpisodes((prev) => ({
+        ...prev,
+        [seasonId]: [...eps].sort((a: any, b: any) => a.episodeNumber - b.episodeNumber),
+      }));
+    } catch {
+      setEpisodes((prev) => ({ ...prev, [seasonId]: [] }));
     } finally {
-      setSubmittingRating(false);
+      setLoadingEp(null);
     }
   };
 
-  if (!profileToken) {
-    return null;
-  }
+  const toggleSeason = (seasonId: string) => {
+    if (openSeason === seasonId) {
+      setOpenSeason(null);
+    } else {
+      setOpenSeason(seasonId);
+      loadEpisodes(seasonId);
+    }
+  };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-ink-950 flex items-center justify-center">
-        <div className="text-center">
-          <Loader size={40} className="text-brand-500 animate-spin mx-auto mb-4" />
-          <p className="text-gray-400">Loading content details...</p>
-        </div>
+  // Auto-load episodes for the open season when seasons are first set
+  useEffect(() => {
+    if (openSeason && !episodes[openSeason]) {
+      loadEpisodes(openSeason);
+    }
+  }, [openSeason]);
+
+  // ── Favorites / Watchlist ─────────────────────────────────────────────────
+  const toggleFav = async () => {
+    try {
+      if (isFavorite) { await apiClient.removeFromFavorites(id!); setIsFavorite(false); toast.success('Removed from favorites'); }
+      else { await apiClient.addToFavorites(id!); setIsFavorite(true); toast.success('Added to favorites'); }
+    } catch (err: any) { toast.error(err?.response?.data?.message || 'Failed'); }
+  };
+
+  const toggleWl = async () => {
+    try {
+      if (isWatchlisted) { await apiClient.removeFromWatchlist(id!); setIsWatchlisted(false); toast.success('Removed from watchlist'); }
+      else { await apiClient.addToWatchlist(id!); setIsWatchlisted(true); toast.success('Added to watchlist'); }
+    } catch (err: any) { toast.error(err?.response?.data?.message || 'Failed'); }
+  };
+
+  // ── Submit rating ─────────────────────────────────────────────────────────
+  const submitRating = async () => {
+    if (!myRating) { toast.error('Select a rating first'); return; }
+    try {
+      setSubmitting(true);
+      await apiClient.addOrUpdateRating(id!, { rating: myRating, review: myReview });
+      toast.success('Rating saved');
+      setRatingOpen(false);
+      // Refresh ratings
+      const rRes = await apiClient.getContentRatings(id!);
+      const rData = rRes?.ratings || rRes?.data || (Array.isArray(rRes) ? rRes : []);
+      setRatings(Array.isArray(rData) ? rData : []);
+    } catch (err: any) { toast.error(err?.response?.data?.message || 'Failed to submit'); }
+    finally { setSubmitting(false); }
+  };
+
+  // ── Guards ────────────────────────────────────────────────────────────────
+  if (!profileToken) return null;
+
+  if (loading) return (
+    <div className="min-h-screen bg-ink-950 flex items-center justify-center">
+      <Loader size={40} className="text-brand-500 animate-spin" />
+    </div>
+  );
+
+  if (error || !content) return (
+    <div className="min-h-screen bg-ink-950 flex items-center justify-center p-4">
+      <div className="text-center">
+        <AlertCircle size={40} className="text-red-500 mx-auto mb-4" />
+        <p className="text-red-400 mb-4">{error || 'Content not found'}</p>
+        <button onClick={() => navigate('/browse')} className="btn-primary">Back to Browse</button>
       </div>
-    );
-  }
+    </div>
+  );
 
-  if (error || !content) {
-    return (
-      <div className="min-h-screen bg-ink-950 flex items-center justify-center p-4">
-        <div className="text-center">
-          <AlertCircle size={40} className="text-error-500 mx-auto mb-4" />
-          <p className="text-error-400 mb-4">{error || 'Content not found'}</p>
-          <button onClick={() => navigate('/browse')} className="btn-primary">
-            Back to Browse
-          </button>
-        </div>
-      </div>
-    );
-  }
-
+  const isSeries = content.type === 'series' || content.type === 'Series';
+  const poster   = content.poster || content.posterUrl;
   const avgRating = ratings.length > 0
-    ? (ratings.reduce((sum: number, r: any) => sum + r.score, 0) / ratings.length).toFixed(1)
-    : 'N/A';
+    ? (ratings.reduce((s: number, r: any) => s + (r.rating || 0), 0) / ratings.length).toFixed(1)
+    : null;
 
   return (
     <div className="min-h-screen bg-ink-950">
-      {/* Hero Backdrop */}
-      <section className="relative h-[500px] overflow-hidden">
+
+      {/* ── Hero ── */}
+      <section className="relative min-h-[480px] flex items-end overflow-hidden">
+        {/* Background */}
         <div className="absolute inset-0">
-          <img
-            src={content.backdropUrl || content.posterUrl}
-            alt={content.title}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 hero-gradient" />
+          <img src={poster} alt={content.title} className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-ink-950 via-ink-950/60 to-ink-950/20" />
         </div>
 
-        {/* Back button */}
-        <div className="relative z-10 pt-6 px-4 sm:px-6 lg:px-12">
-          <button
-            onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg glass border border-ink-600 text-white hover:bg-white/10 transition-colors"
-          >
+        {/* Back */}
+        <div className="absolute top-6 left-4 sm:left-6 lg:left-12 z-10">
+          <button onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg glass border border-ink-600 text-white hover:bg-white/10 transition-colors text-sm">
             ← Back
           </button>
         </div>
 
-        {/* Content Info Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 lg:px-12 pb-8">
-          <div className="max-w-3xl">
-            <div className="flex items-start gap-6 mb-4">
-              <img
-                src={content.posterUrl}
-                alt={content.title}
-                className="w-32 h-48 rounded-lg object-cover shadow-2xl"
-              />
-              <div className="flex-1">
-                <h1 className="text-4xl sm:text-5xl font-bold text-white mb-2">{content.title}</h1>
-                <div className="flex items-center gap-4 mb-4 flex-wrap">
-                  {content.releaseYear && (
-                    <span className="text-gray-300">{content.releaseYear}</span>
-                  )}
-                  {content.ageRating && (
-                    <span className="px-2 py-1 border border-gray-400 rounded text-xs font-bold text-gray-300">
-                      {content.ageRating}
-                    </span>
-                  )}
-                  {content.type && (
-                    <span className="px-2 py-1 bg-brand-500/20 border border-brand-500 rounded text-xs font-bold text-brand-300">
-                      {content.type.toUpperCase()}
-                    </span>
-                  )}
-                  {content.averageRating && (
-                    <span className="flex items-center gap-1 text-gold-500 font-semibold">
-                      <Star size={16} className="fill-gold-500" />
-                      {content.averageRating.toFixed(1)}
-                    </span>
-                  )}
-                </div>
-                <p className="text-gray-300 line-clamp-2">{content.description}</p>
-              </div>
-            </div>
+        {/* Info */}
+        <div className="relative z-10 w-full px-4 sm:px-6 lg:px-12 pb-8">
+          <div className="max-w-4xl flex items-end gap-6">
+            {/* Poster */}
+            {poster && (
+              <img src={poster} alt={content.title}
+                className="hidden sm:block w-36 h-52 rounded-xl object-cover shadow-2xl flex-shrink-0 border border-ink-600" />
+            )}
+            <div className="flex-1">
+              <h1 className="text-3xl sm:text-5xl font-bold text-white mb-3 leading-tight">{content.title}</h1>
 
-            {/* Action Buttons */}
-            <div className="flex items-center gap-3 flex-wrap">
-              <button
-                onClick={() => navigate(`/watch/${id}`)}
-                className="btn-primary text-lg px-8 py-3.5 inline-flex items-center gap-2"
-              >
-                <Play size={22} className="fill-white" />
-                Watch Now
-              </button>
-              <button
-                onClick={handleAddToWatchlist}
-                className={`btn-ghost px-4 py-2 inline-flex items-center gap-2 ${
-                  isWatchlisted ? 'border-brand-500 text-brand-300' : ''
-                }`}
-              >
-                {isWatchlisted ? <Check size={20} /> : <Plus size={20} />}
-                {isWatchlisted ? 'In Watchlist' : 'Watchlist'}
-              </button>
-              <button
-                onClick={handleAddToFavorites}
-                className={`btn-ghost px-4 py-2 inline-flex items-center gap-2 ${
-                  isFavorite ? 'border-error-500 text-error-300' : ''
-                }`}
-              >
-                <Heart size={20} className={isFavorite ? 'fill-current' : ''} />
-                {isFavorite ? 'Favorited' : 'Favorite'}
-              </button>
-              <button className="btn-ghost px-4 py-2 inline-flex items-center gap-2">
-                <Share2 size={20} />
-                Share
-              </button>
+              {/* Meta */}
+              <div className="flex flex-wrap items-center gap-3 mb-4 text-sm">
+                {content.releaseYear && <span className="flex items-center gap-1 text-gray-300"><Calendar size={14} />{content.releaseYear}</span>}
+                {content.ageRating  && <span className="px-2 py-0.5 border border-gray-500 rounded text-xs text-gray-300">{content.ageRating}</span>}
+                {content.type       && <span className="px-2 py-0.5 bg-brand-500/20 border border-brand-500/50 rounded text-xs text-brand-300 uppercase">{content.type}</span>}
+                {isSeries && content.totalSeasons && <span className="flex items-center gap-1 text-gray-300"><Users size={14} />{content.totalSeasons} Season{content.totalSeasons !== 1 ? 's' : ''}</span>}
+                {!isSeries && content.duration && <span className="flex items-center gap-1 text-gray-300"><Clock size={14} />{content.duration} min</span>}
+                {avgRating && <span className="flex items-center gap-1 text-yellow-400 font-semibold"><Star size={14} className="fill-yellow-400" />{avgRating}</span>}
+              </div>
+
+              <p className="text-gray-300 line-clamp-2 mb-5 max-w-2xl">{content.description}</p>
+
+              {/* Actions */}
+              <div className="flex flex-wrap gap-3">
+                {isSeries ? (
+                  <button onClick={() => setTab('episodes')}
+                    className="btn-primary text-base px-7 py-3 inline-flex items-center gap-2">
+                    <Play size={20} className="fill-white" /> View Episodes
+                  </button>
+                ) : (
+                  <button onClick={() => navigate(`/watch/${id}`)}
+                    className="btn-primary text-base px-7 py-3 inline-flex items-center gap-2">
+                    <Play size={20} className="fill-white" /> Watch Now
+                  </button>
+                )}
+                <button onClick={toggleWl}
+                  className={`btn-ghost px-4 py-2.5 inline-flex items-center gap-2 ${isWatchlisted ? 'border-brand-500 text-brand-300' : ''}`}>
+                  {isWatchlisted ? <Check size={18} /> : <Plus size={18} />}
+                  {isWatchlisted ? 'In Watchlist' : 'Watchlist'}
+                </button>
+                <button onClick={toggleFav}
+                  className={`btn-ghost px-4 py-2.5 inline-flex items-center gap-2 ${isFavorite ? 'border-red-500 text-red-400' : ''}`}>
+                  <Heart size={18} className={isFavorite ? 'fill-current' : ''} />
+                  {isFavorite ? 'Favorited' : 'Favorite'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Main Content */}
-      <section className="px-4 sm:px-6 lg:px-12 py-12 max-w-6xl mx-auto">
-        {/* Tabs */}
-        <div className="flex gap-6 mb-12 border-b border-ink-600 pb-4">
-          <button className="font-semibold text-white border-b-2 border-brand-500 pb-2">
-            Overview
-          </button>
-          <button className="text-gray-400 hover:text-white transition-colors">
-            Episodes
-          </button>
-          <button className="text-gray-400 hover:text-white transition-colors">
-            Ratings
-          </button>
+      {/* ── Tabs ── */}
+      <div className="sticky top-16 z-20 bg-ink-950/95 backdrop-blur-sm border-b border-ink-700 px-4 sm:px-6 lg:px-12">
+        <div className="flex gap-0 max-w-6xl mx-auto">
+          {(['overview', ...(isSeries ? ['episodes'] : []), 'ratings'] as Tab[]).map((t) => (
+            <button key={t} onClick={() => setTab(t)}
+              className={`px-5 py-4 text-sm font-medium border-b-2 transition-colors capitalize ${
+                tab === t ? 'border-brand-500 text-white' : 'border-transparent text-gray-400 hover:text-white'
+              }`}>
+              {t === 'episodes' ? `Episodes${seasons.length > 0 ? ` (${seasons.length} season${seasons.length !== 1 ? 's' : ''})` : ''}` :
+               t === 'ratings' && ratings.length > 0 ? `Ratings (${ratings.length})` :
+               t}
+            </button>
+          ))}
         </div>
+      </div>
 
-        {/* Overview Tab */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
-          {/* Main Info */}
-          <div className="lg:col-span-2">
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold text-white mb-4">Description</h2>
-              <p className="text-gray-300 leading-relaxed">{content.description}</p>
+      {/* ── Content ── */}
+      <div className="px-4 sm:px-6 lg:px-12 py-10 max-w-6xl mx-auto">
+
+        {/* OVERVIEW */}
+        {tab === 'overview' && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+            <div className="lg:col-span-2 space-y-8">
+              {/* Description */}
+              <div>
+                <h2 className="text-xl font-bold text-white mb-3">Description</h2>
+                <p className="text-gray-300 leading-relaxed">{content.description}</p>
+              </div>
+
+              {/* Genres */}
+              {content.genres?.length > 0 && (
+                <div>
+                  <h2 className="text-xl font-bold text-white mb-3">Genres</h2>
+                  <div className="flex flex-wrap gap-2">
+                    {content.genres.map((g: any) => (
+                      <span key={g._id || g.name} className="px-3 py-1 rounded-full bg-ink-800 border border-ink-600 text-gray-300 text-sm">
+                        {g.name || g}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Cast */}
+              {content.casts?.length > 0 && (
+                <div>
+                  <h2 className="text-xl font-bold text-white mb-3">Cast</h2>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {content.casts.slice(0, 6).map((c: any) => (
+                      <div key={c._id} className="flex items-center gap-3 bg-ink-800/50 rounded-lg p-3">
+                        <div className="w-10 h-10 rounded-full bg-ink-700 overflow-hidden flex-shrink-0">
+                          {c.actor?.profileImage
+                            ? <img src={c.actor.profileImage} alt={c.actor?.name} className="w-full h-full object-cover" />
+                            : <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs font-bold">
+                                {c.actor?.name?.[0] || '?'}
+                              </div>
+                          }
+                        </div>
+                        <div>
+                          <p className="text-white text-sm font-medium">{c.actor?.name || '—'}</p>
+                          {c.characterName && <p className="text-gray-500 text-xs">{c.characterName}</p>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Cast */}
-            {content.cast && content.cast.length > 0 && (
-              <div className="mb-8">
-                <h2 className="text-2xl font-bold text-white mb-4">Cast</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  {content.cast.map((castItem: any) => (
-                    <div key={castItem._id} className="text-center">
-                      <div className="w-24 h-32 rounded-lg overflow-hidden mb-2 bg-ink-800 mx-auto">
-                        <img
-                          src={castItem.castId?.profileImage || 'https://via.placeholder.com/96x128'}
-                          alt={castItem.castId?.name}
-                          className="w-full h-full object-cover"
-                        />
+            {/* Sidebar */}
+            <div>
+              <div className="glass rounded-xl border border-ink-600 p-5 space-y-4 sticky top-24">
+                {poster && (
+                  <img src={poster} alt={content.title} className="w-full rounded-lg object-cover aspect-[2/3] mb-4" />
+                )}
+                {[
+                  ['Release Year', content.releaseYear],
+                  ['Type',         content.type?.toUpperCase()],
+                  ['Age Rating',   content.ageRating],
+                  ['Duration',     !isSeries && content.duration ? `${content.duration} min` : null],
+                  ['Seasons',      isSeries && content.totalSeasons ? content.totalSeasons : null],
+                  ['Views',        content.viewsCount?.toLocaleString()],
+                  ['Avg Rating',   avgRating ? `${avgRating} / 10` : null],
+                ].filter(([, v]) => v).map(([k, v]) => (
+                  <div key={k as string}>
+                    <p className="text-xs text-gray-500 uppercase mb-0.5">{k}</p>
+                    <p className="text-white font-semibold text-sm">{v}</p>
+                  </div>
+                ))}
+                <button onClick={() => setRatingOpen(true)} className="btn-primary w-full mt-2 text-sm">
+                  {myRating ? '✏️ Update My Rating' : '⭐ Rate This'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* EPISODES */}
+        {tab === 'episodes' && isSeries && (
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-white">Episodes</h2>
+              {seasons.length > 0 && (
+                <span className="text-gray-400 text-sm">{seasons.length} season{seasons.length !== 1 ? 's' : ''}</span>
+              )}
+            </div>
+            {seasons.length === 0 ? (
+              <div className="text-center py-16 glass rounded-xl border border-ink-600">
+                <div className="text-5xl mb-4">📺</div>
+                <p className="text-gray-300 font-semibold mb-2">No seasons available</p>
+                <p className="text-gray-500 text-sm">Episodes haven't been added yet or are not yet published.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {seasons.map((season: any) => (
+                  <div key={season._id} className="glass rounded-xl border border-ink-600 overflow-hidden">
+                    {/* Season header */}
+                    <button onClick={() => toggleSeason(season._id)}
+                      className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/5 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <span className="w-8 h-8 rounded-lg bg-brand-500/20 text-brand-300 text-sm font-bold flex items-center justify-center">
+                          {season.seasonNumber}
+                        </span>
+                        <div className="text-left">
+                          <p className="text-white font-semibold">Season {season.seasonNumber}{season.title ? ` — ${season.title}` : ''}</p>
+                          {episodes[season._id] && (
+                            <p className="text-gray-500 text-xs">{episodes[season._id].length} episode{episodes[season._id].length !== 1 ? 's' : ''}</p>
+                          )}
+                        </div>
                       </div>
-                      <p className="text-sm font-semibold text-white">{castItem.castId?.name}</p>
-                      <p className="text-xs text-gray-400">{castItem.role}</p>
+                      {openSeason === season._id ? <ChevronUp size={18} className="text-gray-400" /> : <ChevronDown size={18} className="text-gray-400" />}
+                    </button>
+
+                    {/* Episode list */}
+                    {openSeason === season._id && (
+                      <div className="border-t border-ink-700">
+                        {loadingEp === season._id ? (
+                          <div className="flex items-center justify-center py-8 gap-2 text-gray-400">
+                            <Loader size={18} className="animate-spin" /> Loading episodes…
+                          </div>
+                        ) : (episodes[season._id] || []).length === 0 ? (
+                          <p className="text-gray-500 text-center py-8 text-sm">No episodes yet.</p>
+                        ) : (
+                          <div className="divide-y divide-ink-800/50">
+                            {(episodes[season._id] || []).map((ep: any) => (
+                              <div key={ep._id} className="flex items-center gap-4 px-5 py-4 hover:bg-white/5 transition-colors">
+                                <div className="w-10 h-10 rounded-lg bg-ink-800 flex items-center justify-center flex-shrink-0 text-gray-400 font-bold text-sm">
+                                  {ep.episodeNumber}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-white font-medium truncate">{ep.title || `Episode ${ep.episodeNumber}`}</p>
+                                  {ep.description && <p className="text-gray-500 text-xs line-clamp-1 mt-0.5">{ep.description}</p>}
+                                  {ep.duration && <p className="text-gray-600 text-xs mt-0.5 flex items-center gap-1"><Clock size={11} />{ep.duration} min</p>}
+                                </div>
+                                {ep.videoUrl && (
+                                  <button
+                                    onClick={() => navigate(`/watch/${ep._id}?type=episode`)}
+                                    className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-brand-500 hover:bg-brand-600 text-white rounded-lg text-xs font-medium transition-all">
+                                    <Play size={12} className="fill-white" /> Play
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* RATINGS */}
+        {tab === 'ratings' && (
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-white">Ratings & Reviews</h2>
+              <button onClick={() => setRatingOpen(true)} className="btn-primary text-sm px-4 py-2">
+                {myRating ? '✏️ Edit My Rating' : '⭐ Add Rating'}
+              </button>
+            </div>
+
+            {ratings.length === 0 ? (
+              <div className="text-center py-16">
+                <Star size={48} className="text-gray-700 mx-auto mb-3" />
+                <p className="text-gray-500">No ratings yet. Be the first to rate!</p>
+              </div>
+            ) : (
+              <>
+                {/* Summary */}
+                <div className="glass rounded-xl border border-ink-600 p-6 mb-6 flex flex-col sm:flex-row items-center gap-6">
+                  <div className="text-center">
+                    <p className="text-5xl font-bold text-yellow-400">{avgRating}</p>
+                    <p className="text-gray-400 text-sm mt-1">out of 10</p>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      {[1,2,3,4,5,6,7,8,9,10].map((n) => (
+                        <div key={n} className={`h-2 flex-1 rounded-full ${n <= Math.round(Number(avgRating)) ? 'bg-yellow-400' : 'bg-ink-700'}`} />
+                      ))}
+                    </div>
+                    <p className="text-gray-400 text-sm">{ratings.length} rating{ratings.length !== 1 ? 's' : ''}</p>
+                  </div>
+                </div>
+
+                {/* Reviews grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {ratings.map((r: any) => (
+                    <div key={r._id} className="glass rounded-xl border border-ink-600 p-5">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          {[1,2,3,4,5].map((s) => (
+                            <Star key={s} size={14} className={s <= Math.round((r.rating || 0) / 2) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-600'} />
+                          ))}
+                          <span className="text-yellow-400 font-bold text-sm ml-1">{r.rating}/10</span>
+                        </div>
+                        <span className="text-gray-600 text-xs">
+                          {r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ''}
+                        </span>
+                      </div>
+                      {r.review && <p className="text-gray-300 text-sm leading-relaxed">{r.review}</p>}
+                      {r.profileId?.name && <p className="text-gray-600 text-xs mt-2">— {r.profileId.name}</p>}
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
-
-            {/* Genres */}
-            {content.genres && content.genres.length > 0 && (
-              <div className="mb-8">
-                <h2 className="text-xl font-bold text-white mb-3">Genres</h2>
-                <div className="flex flex-wrap gap-2">
-                  {content.genres.map((genre: any) => (
-                    <button
-                      key={genre._id}
-                      className="px-3 py-1 rounded-full bg-ink-800 border border-ink-600 text-gray-300 hover:border-brand-500 transition-colors"
-                    >
-                      {genre.genreId?.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              </>
             )}
           </div>
+        )}
+      </div>
 
-          {/* Sidebar Info */}
-          <div>
-            <div className="glass rounded-lg p-6 border border-ink-600 space-y-4">
-              <div>
-                <p className="text-sm text-gray-400 mb-1">Release Year</p>
-                <p className="text-lg font-semibold text-white">{content.releaseYear}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-400 mb-1">Type</p>
-                <p className="text-lg font-semibold text-white capitalize">{content.type}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-400 mb-1">Rating</p>
-                <p className="text-lg font-semibold text-white">{content.ageRating}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-400 mb-1">Views</p>
-                <p className="text-lg font-semibold text-white">{content.viewsCount?.toLocaleString()}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-400 mb-1">Average Rating</p>
-                <p className="text-lg font-semibold text-gold-500">{avgRating} / 5</p>
-              </div>
-              <button
-                onClick={() => setRatingModalOpen(true)}
-                className="btn-primary w-full mt-4"
-              >
-                {myRating ? 'Update Rating' : 'Add Rating'}
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Related Content */}
-      {relatedContent.length > 0 && (
-        <ContentRow title="Similar Content" items={relatedContent} />
-      )}
+      {/* Related */}
+      {related.length > 0 && <ContentRow title="You Might Also Like" items={related} />}
 
       {/* Rating Modal */}
-      {ratingModalOpen && (
-        <div
-          className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
-          onClick={() => setRatingModalOpen(false)}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md bg-ink-850 rounded-2xl p-6 border border-ink-600 shadow-2xl"
-          >
-            <h2 className="text-2xl font-bold text-white mb-6">Rate This Content</h2>
+      {ratingOpen && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+          onClick={() => setRatingOpen(false)}>
+          <div onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md bg-ink-850 rounded-2xl p-6 border border-ink-600 shadow-2xl">
+            <h2 className="text-xl font-bold text-white mb-5">Rate This Content</h2>
 
-            {/* Star Rating */}
-            <div className="mb-6">
-              <label className="block text-sm text-gray-400 mb-3">Your Rating</label>
-              <div className="flex gap-2 justify-center">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    onClick={() => setMyRating(star)}
-                    className={`text-4xl transition-colors ${
-                      star <= myRating ? 'text-gold-500' : 'text-gray-600 hover:text-gold-500'
-                    }`}
-                  >
-                    ★
+            {/* 1-10 rating */}
+            <div className="mb-5">
+              <p className="text-sm text-gray-400 mb-3">Your Rating (1–10)</p>
+              <div className="flex gap-1.5 flex-wrap">
+                {[1,2,3,4,5,6,7,8,9,10].map((n) => (
+                  <button key={n} onClick={() => setMyRating(n)}
+                    className={`w-9 h-9 rounded-lg text-sm font-bold transition-all ${
+                      n <= myRating ? 'bg-yellow-400 text-black' : 'bg-ink-800 text-gray-400 hover:bg-ink-700'
+                    }`}>
+                    {n}
                   </button>
                 ))}
               </div>
-              {myRating > 0 && <p className="text-center text-sm text-gold-400 mt-2">{myRating} / 5</p>}
+              {myRating > 0 && <p className="text-yellow-400 text-xs mt-2">{myRating}/10</p>}
             </div>
 
-            {/* Comment */}
-            <div className="mb-6">
-              <label className="block text-sm text-gray-400 mb-2">Comment (Optional)</label>
-              <textarea
-                value={ratingComment}
-                onChange={(e) => setRatingComment(e.target.value)}
-                placeholder="Share your thoughts about this content..."
-                maxLength={500}
-                className="w-full h-24 px-3 py-2 rounded-lg bg-ink-800 border border-ink-600 text-white placeholder-gray-500 focus:border-brand-500 focus:outline-none resize-none"
-              />
-              <p className="text-xs text-gray-500 mt-1">{ratingComment.length}/500</p>
+            <div className="mb-5">
+              <label className="text-sm text-gray-400 mb-2 block">Review (optional)</label>
+              <textarea value={myReview} onChange={(e) => setMyReview(e.target.value)}
+                placeholder="Share your thoughts…" rows={3} maxLength={500}
+                className="w-full px-3 py-2 rounded-lg bg-ink-800 border border-ink-600 text-white placeholder-gray-500 focus:border-brand-500 focus:outline-none resize-none text-sm" />
+              <p className="text-xs text-gray-600 mt-1">{myReview.length}/500</p>
             </div>
 
-            {/* Buttons */}
             <div className="flex gap-3">
-              <button
-                onClick={() => setRatingModalOpen(false)}
-                className="flex-1 px-4 py-2 rounded-lg border border-ink-600 text-gray-300 hover:bg-white/10 transition-colors"
-              >
+              <button onClick={() => setRatingOpen(false)}
+                className="flex-1 px-4 py-2.5 rounded-lg border border-ink-600 text-gray-400 hover:text-white transition-colors text-sm">
                 Cancel
               </button>
-              <button
-                onClick={handleSubmitRating}
-                disabled={submittingRating || !myRating}
-                className="flex-1 btn-primary disabled:opacity-50"
-              >
-                {submittingRating ? 'Submitting...' : 'Submit Rating'}
+              <button onClick={submitRating} disabled={submitting || !myRating}
+                className="flex-1 btn-primary text-sm disabled:opacity-50">
+                {submitting ? 'Saving…' : 'Submit'}
               </button>
             </div>
           </div>

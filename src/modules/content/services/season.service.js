@@ -43,7 +43,10 @@ class SeasonService {
 
     async getSeasonsBySeriesId(seriesId, isAdmin = false) {
         const matchCondition = isAdmin ? {} : { status: CONTENT_STATUS.PUBLISHED };
-        return await Season.find({ seriesId, ...matchCondition }).sort({ seasonNumber: 1 });
+        // fix for frontend — status field is commented out on Season model, so no filter
+        return await Season.find({ seriesId })
+            .populate('episodes')
+            .sort({ seasonNumber: 1 });
     }
 
     async updateSeason(id, data) {

@@ -37,7 +37,9 @@ class EpisodeService {
     async getEpisodesBySeasonId(seasonId, isAdmin = false) {
         const { CONTENT_STATUS } = require('../../../shared/constants/content-status.constant');
         const matchCondition = isAdmin ? {} : { status: CONTENT_STATUS.PUBLISHED };
-        return await Episode.find({ seasonId, ...matchCondition }).sort({ episodeNumber: 1 });
+        //fix for frontend 
+        //return await Episode.find({ seasonId, ...matchCondition }).sort({ episodeNumber: 1 });
+        return await Episode.find({ seasonId }).sort({ episodeNumber: 1 })
     }
 
     async updateEpisode(id, data) {

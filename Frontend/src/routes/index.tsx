@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import PublicRoute from './PublicRoute';
 import ProtectedRoute from './ProtectedRoute';
+import AdminRoute from './AdminRoute';
 
 // Layouts
 import { MainLayout } from '@/layouts/MainLayout';
@@ -38,6 +39,7 @@ import AdminContent from '@/pages/admin/AdminContent';
 import AdminPlans from '@/pages/admin/AdminPlans';
 import AdminSubscriptions from '@/pages/admin/AdminSubscriptions';
 import AdminRatings from '@/pages/admin/AdminRatings';
+import AdminUpload from '@/pages/admin/AdminUpload';
 
 export function AppRoutes() {
   return (
@@ -105,11 +107,12 @@ export function AppRoutes() {
       </Route>
 
       {/* ==================== ADMIN ROUTES ==================== */}
+      {/* Super admin only */}
       <Route
         element={
-          <ProtectedRoute requireProfile={true}>
+          <AdminRoute allowedRoles={['super_admin']}>
             <MainLayout isAdmin />
-          </ProtectedRoute>
+          </AdminRoute>
         }
       >
         <Route path="/admin" element={<AdminDashboard />} />
@@ -119,6 +122,17 @@ export function AppRoutes() {
         <Route path="/admin/plans" element={<AdminPlans />} />
         <Route path="/admin/subscriptions" element={<AdminSubscriptions />} />
         <Route path="/admin/ratings" element={<AdminRatings />} />
+      </Route>
+
+      {/* Super admin + content manager */}
+      <Route
+        element={
+          <AdminRoute allowedRoles={['super_admin', 'content_manager']}>
+            <MainLayout isAdmin />
+          </AdminRoute>
+        }
+      >
+        <Route path="/admin/upload" element={<AdminUpload />} />
       </Route>
 
       {/* ==================== CATCH ALL ==================== */}

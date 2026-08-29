@@ -65,18 +65,18 @@ router.delete(
 // Public/Client Routes
 
 router.get(
-    '/:id',
-    episodeIdValidator,
-    asyncHandler(episodeController.getById)
-);
-
-router.get(
     '/season/:seasonId',
     param('seasonId')
         .isMongoId()
         .withMessage('Season ID is invalid'),
     validate,
     asyncHandler(episodeController.getBySeason)
+);
+
+router.get(
+    '/:id',
+    episodeIdValidator,
+    asyncHandler(episodeController.getById)
 );
 
 module.exports = router;

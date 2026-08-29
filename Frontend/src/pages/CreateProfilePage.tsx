@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Trash2, X, AlertCircle, Loader } from 'lucide-react';
+import { Plus, X, AlertCircle, Loader } from 'lucide-react';
 import { useToast } from '@/lib/useToast';
+import { useProfile } from '@/lib/profileContext';
 import { apiClient } from '@/lib/apiClient';
 import { getInitials } from '@/lib/utils';
 
@@ -13,6 +14,7 @@ const AVATAR_COLORS = [
 export default function CreateProfilePage() {
   const navigate = useNavigate();
   const toast = useToast();
+  const { setProfileToken, setCurrentProfile } = useProfile();
 
   const [profiles, setProfiles] = useState<any[]>([]);
   const [maxProfiles, setMaxProfiles] = useState<number>(6); // Default
@@ -76,6 +78,24 @@ export default function CreateProfilePage() {
 
     try {
       setAddingProfile(true);
+
+      // Creating a profile requires a primary profile token.
+      // Silently select the primary profile if we don't have a token yet.
+      const currentToken = apiClient.getProfileToken();
+      if (!currentToken) {
+        const primary = profiles.find((p: any) => p.primaryProfile);
+        if (!primary) {
+          toast.error('No primary profile found.');
+          return;
+        }
+        const res = await apiClient.selectProfile(primary._id);
+        const resData = res.data || res;
+        const token = resData.token || resData.profileToken;
+        if (!token) throw new Error('Could not obtain primary profile token');
+        setProfileToken(token);
+        setCurrentProfile(resData.profile || resData);
+      }
+
       await apiClient.createProfile({
         name: newProfileName.trim(),
         isKids: newProfileIsKids,
@@ -88,9 +108,6 @@ export default function CreateProfilePage() {
       setNewProfileIsKids(false);
       setSelectedColor(AVATAR_COLORS[0]);
       await loadProfiles();
-      
-      // If this was the first profile created, close the modal so user can continue
-      // They'll see the continue button if they have at least the primary + this new one
     } catch (error: any) {
       const msg = error?.response?.data?.message || 'Failed to create profile';
       toast.error(msg);
